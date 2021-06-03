@@ -1,0 +1,44 @@
+{
+  "basic_info" : {
+    "n_steps" : 10,
+    "manip" : "right_arm",
+    "fixed_timesteps" : [0]
+  },
+  "costs" : [
+  {
+    "type" : "joint_vel",
+    "use_time" : "false",
+    "params": {
+      "coeffs" : [1],
+      "targets" : [0, 0, 0, 0, 0, 0, 0]
+    }
+  },
+  {
+    "type" : "collision",
+    "params" : {
+      "coeffs" : [20],
+      "dist_pen" : [0.025],
+      "evaluator_type" : 2,
+      "longest_valid_segment_length" : 0.05
+    }
+  }
+  ],
+  "constraints" : [
+  {
+    "type" : "joint_pos",
+    "name" : "joint0",
+    "use_time" : "tRuE",
+    "params" : {
+       "coeffs": [1, 1, 1, 1, 1, 1, 1],
+       "targets" : [0.062, 1.287, 0.1, -1.554, -3.011, -0.268, 2.988],
+       "first_step": 9,
+       "last_step": 9
+    }
+  }
+  ],
+  "init_info" : {
+    "type" : "joint_interpolated",
+    "dt": 0.12341234,
+    "endpoint" : [ 0.062,  1.287,  0.1  , -1.554, -3.011, -0.268,  2.988]
+  }
+}

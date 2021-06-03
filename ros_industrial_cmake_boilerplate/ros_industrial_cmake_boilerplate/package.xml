@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>ros_industrial_cmake_boilerplate</name>
+  <version>0.2.9</version>
+  <description>Contains boilerplate cmake script, macros and utils</description>
+  <maintainer email="Levi.Armstrong@swri.org">Levi Armstrong</maintainer>
+  <license>Apache 2.0</license>
+  <license>BSD 3-Clause</license>
+  <author>Levi Armstrong</author>
+  <author>George Cave</author>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <test_depend>gtest</test_depend>
+  <test_depend>lcov</test_depend>
+  <test_depend>libclang-dev</test_depend>
+  <test_depend>iwyu</test_depend>
+  <test_depend>cppcheck</test_depend>
+
+  <export>
+    <build_type>cmake</build_type>
+  </export>
+</package>

@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<robot name="puzzle_piece_workcell" xmlns:xacro="http://wiki.ros.org/xacro">
+
+  <!-- This contains the macro "ses_part_macro" that places the clip wrt the tool tip -->
+  <xacro:include filename="$(find twc_support)/CAD/robot/abb_irbpa250_d1000/urdf/irbpa250_d1000_macro.xacro"/>
+  <xacro:abb_irbpa250_d1000 prefix="positioner_"/>
+
+  <xacro:include filename="$(find abb_irb2600_support)/urdf/irb2600_12_165_macro.xacro" />
+  <xacro:abb_irb2600_12_165 prefix=""/>
+    
+  <link name="world"/>
+
+  <joint name="world_to_positioner" type="fixed">
+    <parent link="world"/>
+    <child link="positioner_base_link"/>
+    <origin xyz="1 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="world_to_abb" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
+</robot>
