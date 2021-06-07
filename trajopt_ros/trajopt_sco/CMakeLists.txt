@@ -34,6 +34,8 @@ if (NOT APPLE AND NOT WIN32)
   set (HAVE_BPMPD TRUE)
 endif()
 
+set (HAVE_BPMPD FALSE)
+
 if (HAVE_BPMPD)
   add_executable(bpmpd_caller src/bpmpd_caller.cpp)
 
