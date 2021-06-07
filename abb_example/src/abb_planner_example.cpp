@@ -146,26 +146,26 @@ bool AbbPlannerExample::run()
   joint_names.push_back("joint_4");
   joint_names.push_back("joint_5");
   joint_names.push_back("joint_6");
-//  joint_names.push_back("positioner_base_joint");
-//  joint_names.push_back("positioner_joint_1");
+  joint_names.push_back("positioner_base_joint");
+  joint_names.push_back("positioner_joint_1");
 
 
-  Eigen::VectorXd joint_start_pos(6);
+  Eigen::VectorXd joint_start_pos(8);
   joint_start_pos(0) = -0.4;
   joint_start_pos(1) = 0.2762;
   joint_start_pos(2) = 0.0;
   joint_start_pos(3) = -1.3348;
   joint_start_pos(4) = 0.0;
   joint_start_pos(5) = 1.4959;
-//  joint_start_pos(6) = 0;
-//  joint_start_pos(7) = 0;
+  joint_start_pos(6) = 0;
+  joint_start_pos(7) = 0;
 
   env_->setState(joint_names, joint_start_pos);
 
   // Create manipulator information for program
   ManipulatorInfo mi;
   mi.manipulator = "manipulator_aux";
-  mi.working_frame = "part";
+  mi.working_frame = "positioner_tool0";
   mi.tcp = tesseract_planning::ToolCenterPoint("tool0", false);  // true - indicates this is an external TCP
   // Create Program
   CompositeInstruction program("FREESPACE", CompositeInstructionOrder::ORDERED, mi);
