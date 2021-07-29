@@ -28,6 +28,7 @@
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <console_bridge/console.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
+#include <tesseract_common/timer.h>
 
 #include <tesseract_motion_planners/planner_utils.h>
 #include <tesseract_process_managers/core/utils.h>
@@ -37,6 +38,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_command_language/utils/filter_functions.h>
 #include <tesseract_command_language/utils/flatten_utils.h>
 #include <tesseract_time_parameterization/iterative_spline_parameterization.h>
+#include <tesseract_time_parameterization/instructions_trajectory.h>
 
 namespace tesseract_planning
 {
@@ -63,6 +65,8 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   auto info = std::make_shared<IterativeSplineParameterizationTaskInfo>(unique_id, name_);
   info->return_value = 0;
   input.addTaskInfo(info);
+  tesseract_common::Timer timer;
+  timer.start();
   saveInputs(info, input);
 
   // --------------------
@@ -73,6 +77,7 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   {
     CONSOLE_BRIDGE_logError("Input results to iterative spline parameterization must be a composite instruction");
     saveOutputs(info, input);
+    info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
 
@@ -94,6 +99,7 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
     CONSOLE_BRIDGE_logWarn("Iterative spline time parameterization found no MoveInstructions to process");
     info->return_value = 1;
     saveOutputs(info, input);
+    info->elapsed_time = timer.elapsedSeconds();
     return 1;
   }
 
@@ -123,7 +129,8 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   }
 
   // Solve using parameters
-  if (!solver_.compute(ci,
+  TrajectoryContainer::Ptr trajectory = std::make_shared<InstructionsTrajectory>(ci);
+  if (!solver_.compute(*trajectory,
                        fwd_kin->getLimits().velocity_limits,
                        fwd_kin->getLimits().acceleration_limits,
                        velocity_scaling_factors,
@@ -132,12 +139,14 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
     CONSOLE_BRIDGE_logInform("Failed to perform iterative spline time parameterization for process input: %s!",
                              input_results->getDescription().c_str());
     saveOutputs(info, input);
+    info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
 
   CONSOLE_BRIDGE_logDebug("Iterative spline time parameterization succeeded");
   info->return_value = 1;
   saveOutputs(info, input);
+  info->elapsed_time = timer.elapsedSeconds();
   return 1;
 }
 

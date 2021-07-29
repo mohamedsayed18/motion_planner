@@ -169,10 +169,8 @@ bool PuzzlePieceExample::run()
   joint_names.push_back("joint_a5");
   joint_names.push_back("joint_a6");
   joint_names.push_back("joint_a7");
-  joint_names.push_back("joint_aux1");
-  joint_names.push_back("joint_aux2");
 
-  Eigen::VectorXd joint_pos(9);
+  Eigen::VectorXd joint_pos(7);
   joint_pos(0) = -0.785398;
   joint_pos(1) = 0.4;
   joint_pos(2) = 0.0;
@@ -180,8 +178,6 @@ bool PuzzlePieceExample::run()
   joint_pos(4) = 0.0;
   joint_pos(5) = 1.0;
   joint_pos(6) = 0.0;
-  joint_pos(7) = 0.0;
-  joint_pos(8) = 0.0;
 
   env_->setState(joint_names, joint_pos);
 
@@ -190,7 +186,7 @@ bool PuzzlePieceExample::run()
 
   // Create manipulator information for program
   ManipulatorInfo mi;
-  mi.manipulator = "manipulator_aux";
+  mi.manipulator = "manipulator";
   mi.working_frame = "part";
   mi.tcp = ToolCenterPoint("grinder_frame", true);  // true - indicates this is an external TCP
 

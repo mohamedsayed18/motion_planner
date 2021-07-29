@@ -30,7 +30,7 @@
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <memory>
 #include <vector>
-#include <descartes_light/interface/edge_evaluator.h>
+#include <descartes_light/core/edge_evaluator.h>
 #include <tesseract_environment/core/environment.h>
 #include <tesseract_collision/core/discrete_contact_manager.h>
 #include <tesseract_collision/core/continuous_contact_manager.h>
@@ -50,8 +50,8 @@ public:
                                   bool allow_collision = false,
                                   bool debug = false);
 
-  std::pair<bool, FloatType> evaluate(const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& start,
-                                      const Eigen::Matrix<FloatType, Eigen::Dynamic, 1>& end) const override;
+  std::pair<bool, FloatType> evaluate(const descartes_light::State<FloatType>& start,
+                                      const descartes_light::State<FloatType>& end) const override;
 
 protected:
   /** @brief The tesseract state solver */

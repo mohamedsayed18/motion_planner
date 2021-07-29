@@ -142,12 +142,12 @@ bool BasicCartesianExample::run()
   monitor_ = std::make_shared<tesseract_monitoring::EnvironmentMonitor>(env_, EXAMPLE_MONITOR_NAMESPACE);
   if (rviz_)
     monitor_->startPublishingEnvironment();
-/*
+
   // Create octomap and add it to the local environment
   Command::Ptr cmd = addPointCloud();
   if (!monitor_->applyCommand(cmd))
     return false;
-*/
+
   // Create plotting tool
   ROSPlottingPtr plotter = std::make_shared<ROSPlotting>(monitor_->getSceneGraph()->getRoot());
   if (rviz_)
@@ -155,17 +155,15 @@ bool BasicCartesianExample::run()
 
   // Set the robot initial state
   std::vector<std::string> joint_names;
-  joint_names.push_back("joint_1");
-  joint_names.push_back("joint_2");
-  joint_names.push_back("joint_3");
-  joint_names.push_back("joint_4");
-  joint_names.push_back("joint_5");
-  joint_names.push_back("joint_6");
-  joint_names.push_back("positioner_base_joint");
-  joint_names.push_back("positioner_joint_1");
+  joint_names.push_back("joint_a1");
+  joint_names.push_back("joint_a2");
+  joint_names.push_back("joint_a3");
+  joint_names.push_back("joint_a4");
+  joint_names.push_back("joint_a5");
+  joint_names.push_back("joint_a6");
+  joint_names.push_back("joint_a7");
 
-
-  Eigen::VectorXd joint_pos(8);
+  Eigen::VectorXd joint_pos(7);
   joint_pos(0) = -0.4;
   joint_pos(1) = 0.2762;
   joint_pos(2) = 0.0;
@@ -173,7 +171,6 @@ bool BasicCartesianExample::run()
   joint_pos(4) = 0.0;
   joint_pos(5) = 1.4959;
   joint_pos(6) = 0.0;
-  joint_pos(7) = 0;
 
   env_->setState(joint_names, joint_pos);
 

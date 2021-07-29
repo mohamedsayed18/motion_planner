@@ -3,9 +3,8 @@
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
-#include <descartes_light/interface/edge_evaluator.h>
-#include <descartes_light/interface/waypoint_sampler.h>
-#include <descartes_light/descartes_light.h>
+#include <descartes_light/core/edge_evaluator.h>
+#include <descartes_light/core/waypoint_sampler.h>
 #include <Eigen/Geometry>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
@@ -40,7 +39,7 @@ class DescartesMotionPlanner : public MotionPlanner
 {
 public:
   /** @brief Construct a basic planner */
-  DescartesMotionPlanner();
+  DescartesMotionPlanner(std::string name = "DESCARTES");
   ~DescartesMotionPlanner() override = default;
   DescartesMotionPlanner(const DescartesMotionPlanner&) = delete;
   DescartesMotionPlanner& operator=(const DescartesMotionPlanner&) = delete;
@@ -89,7 +88,7 @@ public:
 
 private:
   /** @brief The planners status codes */
-  std::string name_{ "DESCARTES" };
+  std::string name_;
   std::shared_ptr<const DescartesMotionPlannerStatusCategory> status_category_;
 };
 

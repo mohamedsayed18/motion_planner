@@ -52,6 +52,7 @@ public:
   using Ptr = std::shared_ptr<TaskInfo>;
   using ConstPtr = std::shared_ptr<const TaskInfo>;
 
+  TaskInfo() = default;  // Required for serialziation
   TaskInfo(std::size_t unique_id, std::string name = "");
   virtual ~TaskInfo() = default;
   TaskInfo(const TaskInfo&) = default;
@@ -69,6 +70,9 @@ public:
 
   std::string message;
 
+  /** @brief elapsed_time Time spent in this task in seconds*/
+  double elapsed_time;
+
   /** @brief Instructions passed to task (optionally set) */
   Instruction instructions_input{ NullInstruction() };
   /** @brief Instructions after running the task (optionally set)*/
@@ -79,6 +83,14 @@ public:
   Instruction results_output{ NullInstruction() };
   /** @brief This is a clone of the environment at the beginning of the task (optionally set)*/
   tesseract_environment::Environment::ConstPtr environment{ nullptr };
+
+  bool operator==(const TaskInfo& rhs) const;
+  bool operator!=(const TaskInfo& rhs) const;
+
+private:
+  friend class boost::serialization::access;
+  template <class Archive>
+  void serialize(Archive& ar, const unsigned int version);  // NOLINT
 };
 
 /** @brief A threadsafe container for TaskInfos */

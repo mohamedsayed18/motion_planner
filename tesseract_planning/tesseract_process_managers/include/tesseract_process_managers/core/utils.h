@@ -38,6 +38,8 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_process_managers/core/task_input.h>
 #include <tesseract_process_managers/core/task_info.h>
 
+#include <backward.hpp>
+
 namespace tesseract_planning
 {
 /**

@@ -41,6 +41,8 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_kinematics/core/forward_kinematics.h>
 #include <tesseract_kinematics/kdl/kdl_utils.h>
 
+#include <backward.hpp>
+
 #ifdef SWIG
 %shared_ptr(tesseract_kinematics::KDLFwdKinChain)
 #endif  // SWIG
@@ -98,6 +100,8 @@ public:
   const tesseract_common::KinematicLimits& getLimits() const override;
 
   void setLimits(tesseract_common::KinematicLimits limits) override;
+
+  std::vector<Eigen::Index> getRedundancyCapableJointIndices() const override;
 
   unsigned int numJoints() const override;
 

@@ -38,6 +38,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_common/types.h>
+#include <tesseract_kinematics/core/forward_kinematics.h>
 
 #ifdef SWIG
 %shared_ptr(tesseract_kinematics::InverseKinematics)
@@ -72,7 +73,20 @@ public:
   virtual bool update() = 0;
 
   /**
+   * @brief Synchronize inverse data to align with forward kinematics object
+   * @param fwd_kin The forward kinematics object to synchronize with
+   */
+  virtual void synchronize(ForwardKinematics::ConstPtr fwd_kin) = 0;
+
+  /**
+   * @brief Check if inverse kinematics has been synchronized with a forward kinematics object
+   * @return True if synchronized, otherwise False
+   */
+  virtual bool isSynchronized() const = 0;
+
+  /**
    * @brief Calculates joint solutions given a pose.
+   * @details If redundant solutions are needed see utility funciton getRedundantSolutions.
    * @param solutions A vector of solutions, so check the size of the vector to determine the number of solutions
    * @param pose Transform of end-of-tip relative to root (base link)
    * @param seed Vector of seed joint angles (size must match number of joints in robot chain)
@@ -83,6 +97,7 @@ public:
 
   /**
    * @brief Calculates joint solutions given a pose for a specific link.
+   * @details If redundant solutions are needed see utility funciton getRedundantSolutions.
    * @param pose Transform of end-of-tip relative to root (base link)
    * @param seed Vector of seed joint angles (size must match number of joints in robot chain)
    * @return A vector of solutions, If empty it failed to find a solution (including uninitialized)
@@ -130,6 +145,12 @@ public:
    * @param Kinematic Limits
    */
   virtual void setLimits(tesseract_common::KinematicLimits limits) = 0;
+
+  /**
+   * @brief Get vector indicating which joints are capable of producing redundant solutions
+   * @return A vector of joint indicies
+   */
+  virtual std::vector<Eigen::Index> getRedundancyCapableJointIndices() const = 0;
 
   /**
    * @brief Number of joints in robot

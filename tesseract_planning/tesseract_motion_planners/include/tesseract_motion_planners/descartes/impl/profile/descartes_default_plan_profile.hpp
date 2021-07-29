@@ -36,9 +36,10 @@
 #include <tesseract_motion_planners/descartes/descartes_collision.h>
 #include <tesseract_motion_planners/descartes/descartes_collision_edge_evaluator.h>
 
-#include <descartes_samplers/evaluators/euclidean_distance_edge_evaluator.h>
-#include <descartes_samplers/evaluators/compound_edge_evaluator.h>
-#include <descartes_samplers/samplers/fixed_joint_waypoint_sampler.h>
+#include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
+#include <descartes_light/edge_evaluators/compound_edge_evaluator.h>
+#include <descartes_light/state_evaluators/euclidean_distance_state_evaluator.h>
+#include <descartes_light/samplers/fixed_joint_waypoint_sampler.h>
 
 #include <tesseract_kinematics/core/utils.h>
 
@@ -205,8 +206,14 @@ void DescartesDefaultPlanProfile<FloatType>::apply(DescartesProblem<FloatType>& 
   if (vertex_evaluator == nullptr)
   {
     auto ve = std::make_shared<DescartesJointLimitsVertexEvaluator>(prob.manip_inv_kin->getLimits().joint_limits);
-    sampler = std::make_shared<DescartesRobotSampler<FloatType>>(
-        manip_baselink_to_waypoint, target_pose_sampler, prob.manip_inv_kin, ci, tcp, allow_collision, ve);
+    sampler = std::make_shared<DescartesRobotSampler<FloatType>>(manip_baselink_to_waypoint,
+                                                                 target_pose_sampler,
+                                                                 prob.manip_inv_kin,
+                                                                 ci,
+                                                                 tcp,
+                                                                 allow_collision,
+                                                                 ve,
+                                                                 use_redundant_joint_solutions);
   }
   else
   {
@@ -216,7 +223,8 @@ void DescartesDefaultPlanProfile<FloatType>::apply(DescartesProblem<FloatType>& 
                                                                  ci,
                                                                  tcp,
                                                                  allow_collision,
-                                                                 vertex_evaluator(prob));
+                                                                 vertex_evaluator(prob),
+                                                                 use_redundant_joint_solutions);
   }
   prob.samplers.push_back(std::move(sampler));
 
@@ -248,6 +256,17 @@ void DescartesDefaultPlanProfile<FloatType>::apply(DescartesProblem<FloatType>& 
     {
       prob.edge_evaluators.push_back(edge_evaluator(prob));
     }
+  }
+
+  // Add state evaluator
+  if (state_evaluator != nullptr)
+    prob.state_evaluators.push_back(state_evaluator(prob));
+  else
+  {
+    auto ref = std::make_shared<descartes_light::State<FloatType>>(Eigen::Matrix<FloatType, Eigen::Dynamic, 1>::Zero(
+        static_cast<Eigen::Index>(prob.manip_inv_kin->getJointNames().size())));
+    prob.state_evaluators.push_back(
+        std::make_shared<const descartes_light::EuclideanDistanceStateEvaluator<FloatType>>(ref));
   }
 
   prob.num_threads = num_threads;
@@ -261,8 +280,8 @@ void DescartesDefaultPlanProfile<FloatType>::apply(DescartesProblem<FloatType>& 
                                                    const std::vector<std::string>& active_links,
                                                    int index) const
 {
-  auto sampler =
-      std::make_shared<descartes_light::FixedJointWaypointSampler<FloatType>>(joint_waypoint.cast<FloatType>());
+  auto state = std::make_shared<descartes_light::State<FloatType>>(joint_waypoint.cast<FloatType>());
+  auto sampler = std::make_shared<descartes_light::FixedJointWaypointSampler<FloatType>>(state);
   prob.samplers.push_back(std::move(sampler));
 
   if (index != 0)
@@ -293,6 +312,16 @@ void DescartesDefaultPlanProfile<FloatType>::apply(DescartesProblem<FloatType>& 
     {
       prob.edge_evaluators.push_back(edge_evaluator(prob));
     }
+  }
+
+  if (state_evaluator != nullptr)
+    prob.state_evaluators.push_back(state_evaluator(prob));
+  else
+  {
+    auto ref = std::make_shared<descartes_light::State<FloatType>>(Eigen::Matrix<FloatType, Eigen::Dynamic, 1>::Zero(
+        static_cast<Eigen::Index>(prob.manip_inv_kin->getJointNames().size())));
+    prob.state_evaluators.push_back(
+        std::make_shared<const descartes_light::EuclideanDistanceStateEvaluator<FloatType>>(ref));
   }
 
   prob.num_threads = num_threads;

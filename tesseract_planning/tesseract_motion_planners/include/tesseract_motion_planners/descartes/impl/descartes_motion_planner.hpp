@@ -28,10 +28,8 @@
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
-#include <descartes_light/descartes_light.h>
-#include <descartes_light/interface/waypoint_sampler.h>
-#include <descartes_samplers/samplers/fixed_joint_waypoint_sampler.h>
-#include <descartes_samplers/evaluators/timing_edge_evaluator.h>
+#include <descartes_light/solvers/ladder_graph/ladder_graph_solver.h>
+#include <descartes_light/samplers/fixed_joint_waypoint_sampler.h>
 #include <vector>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
@@ -51,8 +49,8 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 namespace tesseract_planning
 {
 template <typename FloatType>
-DescartesMotionPlanner<FloatType>::DescartesMotionPlanner()
-  : status_category_(std::make_shared<const DescartesMotionPlannerStatusCategory>(name_))
+DescartesMotionPlanner<FloatType>::DescartesMotionPlanner(std::string name)
+  : name_(std::move(name)), status_category_(std::make_shared<const DescartesMotionPlannerStatusCategory>(name_))
 {
   plan_profiles[DEFAULT_PROFILE_KEY] = std::make_shared<DescartesDefaultPlanProfile<FloatType>>();
 }
@@ -98,10 +96,19 @@ tesseract_common::StatusCode DescartesMotionPlanner<FloatType>::solve(const Plan
     response.data = problem;
   }
 
-  descartes_light::Solver<FloatType> graph_builder(problem->manip_inv_kin->numJoints());
+  descartes_light::SearchResult<FloatType> descartes_result;
   try
   {
-    graph_builder.build(problem->samplers, problem->edge_evaluators, problem->num_threads);
+    descartes_light::LadderGraphSolver<FloatType> solver(problem->manip_inv_kin->numJoints(), problem->num_threads);
+    solver.build(problem->samplers, problem->edge_evaluators, problem->state_evaluators);
+    descartes_result = solver.search();
+    if (descartes_result.trajectory.empty())
+    {
+      CONSOLE_BRIDGE_logError("Search for graph completion failed");
+      response.status = tesseract_common::StatusCode(
+          DescartesMotionPlannerStatusCategory::ErrorFailedToFindValidSolution, status_category_);
+      return response.status;
+    }
   }
   catch (...)
   {
@@ -123,26 +130,12 @@ tesseract_common::StatusCode DescartesMotionPlanner<FloatType>::solve(const Plan
     return response.status;
   }
 
-  //  // No failed waypoints
-  //  response.succeeded_waypoints = config_->waypoints;
-  //  response.failed_waypoints.clear();
-
-  // Search for edges
-  std::vector<Eigen::Matrix<FloatType, Eigen::Dynamic, 1>> solution_float_type = graph_builder.search();
-  if (solution_float_type.empty())
-  {
-    CONSOLE_BRIDGE_logError("Search for graph completion failed");
-    response.status = tesseract_common::StatusCode(DescartesMotionPlannerStatusCategory::ErrorFailedToFindValidSolution,
-                                                   status_category_);
-    return response.status;
-  }
-
   // Enforce limits
   std::vector<Eigen::VectorXd> solution;
-  solution.reserve(solution_float_type.size());
-  for (const auto& js : solution_float_type)
+  solution.reserve(descartes_result.trajectory.size());
+  for (const auto& js : descartes_result.trajectory)
   {
-    solution.push_back(js.template cast<double>());
+    solution.push_back(js->values.template cast<double>());
     // Using 1e-6 because when using floats with descartes epsilon does not seem to be enough
     assert(
         tesseract_common::satisfiesPositionLimits(solution.back(), problem->manip_fwd_kin->getLimits().joint_limits));
@@ -257,7 +250,7 @@ void DescartesMotionPlanner<FloatType>::clear()
 template <typename FloatType>
 MotionPlanner::Ptr DescartesMotionPlanner<FloatType>::clone() const
 {
-  return std::make_shared<DescartesMotionPlanner<FloatType>>();
+  return std::make_shared<DescartesMotionPlanner<FloatType>>(name_);
 }
 
 }  // namespace tesseract_planning

@@ -111,6 +111,7 @@ std::vector<std::string> ProcessPlanningServer::getAvailableProcessPlanners() co
 ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& request)
 {
   CONSOLE_BRIDGE_logInform("Tesseract Planning Server Received Request!");
+  //CONSOLE_BRIDGE_logWarn("Start the process planning");
   ProcessPlanningFuture response;
   response.plan_profile_remapping = std::make_unique<const PlannerProfileRemapping>(request.plan_profile_remapping);
   response.composite_profile_remapping =
@@ -120,16 +121,18 @@ ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& r
   auto& composite_program = response.input->as<CompositeInstruction>();
   ManipulatorInfo mi = composite_program.getManipulatorInfo();
   response.global_manip_info = std::make_unique<const ManipulatorInfo>(mi);
-
+  CONSOLE_BRIDGE_logWarn("Get the input instructions & Manipulator");
   bool has_seed{ false };
   if (!isNullInstruction(request.seed))
   {
     has_seed = true;
     response.results = std::make_unique<Instruction>(request.seed);
+    CONSOLE_BRIDGE_logWarn("Null Instruction");
   }
   else
   {
     response.results = std::make_unique<Instruction>(generateSkeletonSeed(composite_program));
+    CONSOLE_BRIDGE_logWarn("Not a Null Instruction");
   }
 
   auto it = process_planners_.find(request.name);
@@ -177,8 +180,9 @@ ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& r
     response.taskflow_container.taskflow->dump(out_data);
     out_data.close();
   }
-
+  CONSOLE_BRIDGE_logWarn("The program is above");
   response.process_future = executor_->run(*(response.taskflow_container.taskflow));
+  CONSOLE_BRIDGE_logWarn("Return response");
   return response;
 }
 

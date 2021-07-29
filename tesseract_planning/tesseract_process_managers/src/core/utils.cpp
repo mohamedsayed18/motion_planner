@@ -47,6 +47,9 @@ void failureTask(TaskInput instruction,
   // Call abort on the process input
   instruction.abort();
 
+  using namespace backward;
+  StackTrace st; st.load_here(32);
+  Printer p; p.print(st);
   // Print an error if this is the first failure
   CONSOLE_BRIDGE_logError("%s Failure: %s", name.c_str(), message.c_str());
   if (user_callback)

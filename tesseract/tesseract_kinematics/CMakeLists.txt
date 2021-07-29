@@ -17,6 +17,7 @@ find_package(tesseract_scene_graph REQUIRED)
 find_package(tesseract_srdf REQUIRED)
 find_package(tesseract_common REQUIRED)
 find_package(opw_kinematics REQUIRED)
+#find_package(Backward)
 
 if(NOT TARGET console_bridge::console_bridge)
   add_library(console_bridge::console_bridge INTERFACE IMPORTED)
@@ -45,6 +46,7 @@ add_code_coverage_all_targets(EXCLUDE ${COVERAGE_EXCLUDE} ENABLE ${TESSERACT_ENA
 
 # Create interface for core
 add_library(${PROJECT_NAME}_core src/core/rop_inverse_kinematics.cpp src/core/rep_inverse_kinematics.cpp)
+target_include_directories(${PROJECT_NAME}_core PUBLIC /media/mohamed/C03CCDB43CCDA62E/work/Mx3D/mx_space/src/motion-planner/backward-cpp)
 target_link_libraries(
   ${PROJECT_NAME}_core
   PUBLIC Eigen3::Eigen

@@ -36,6 +36,8 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_kinematics/core/forward_kinematics.h>
 #include <tesseract_kinematics/core/inverse_kinematics.h>
 
+#include <backward.hpp>
+
 namespace tesseract_kinematics
 {
 /**
@@ -141,13 +143,29 @@ inline bool checkKinematics(const tesseract_kinematics::ForwardKinematics::Const
     joint_angles2[t] = M_PI / 2;
 
     test1 = fwd_kin->calcFwdKin(joint_angles2);
+    std::stringstream s1;
+    std::stringstream s2;
+    s1 << test1.matrix();
+    //CONSOLE_BRIDGE_logWarn(s1.str().c_str());
     IKSolutions sols = inv_kin->calcInvKin(test1, seed_angles);
     for (const auto& sol : sols)
     {
       test2 = fwd_kin->calcFwdKin(sol);
+      s2 << test2.matrix();
+      //CONSOLE_BRIDGE_logWarn(s2.str().c_str());
 
       if ((test1.translation() - test2.translation()).norm() > tol)
       {
+        /*
+        std::stringstream ss;
+        auto normal = (test1.translation() - test2.translation()).norm();
+        ss << normal;
+        //CONSOLE_BRIDGE_logWarn(ss.str().c_str());
+        using namespace backward;
+        StackTrace st; st.load_here(32);
+        Printer p; p.print(st);
+        */
+
         CONSOLE_BRIDGE_logError("checkKinematics: Manipulator translation norm is greater than tolerance %f!", tol);
         return false;
       }

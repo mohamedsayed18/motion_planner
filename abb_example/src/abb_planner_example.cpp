@@ -40,6 +40,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_process_managers/taskflow_generators/trajopt_taskflow.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_solver_profile.h>
 #include <tesseract_planning_server/tesseract_planning_server.h>
 #include <tesseract_motion_planners/ompl/profile/ompl_default_plan_profile.h>
 #include <tesseract_motion_planners/core/utils.h>
@@ -102,7 +103,6 @@ tesseract_common::VectorIsometry3d AbbPlannerExample::getPoses()
   indata.close();
   return path;
 }
-
 bool AbbPlannerExample::run()
 {
   using tesseract_planning::CartesianWaypoint;
@@ -146,26 +146,36 @@ bool AbbPlannerExample::run()
   joint_names.push_back("joint_4");
   joint_names.push_back("joint_5");
   joint_names.push_back("joint_6");
-//  joint_names.push_back("positioner_base_joint");
-//  joint_names.push_back("positioner_joint_1");
+  joint_names.push_back("positioner_base_joint");
+  joint_names.push_back("positioner_joint_1");
 
-
-  Eigen::VectorXd joint_start_pos(6);
-  joint_start_pos(0) = -0.4;
-  joint_start_pos(1) = 0.2762;
+  Eigen::VectorXd joint_start_pos(8);
+  joint_start_pos(0) = 0;
+  joint_start_pos(1) = 0;
   joint_start_pos(2) = 0.0;
-  joint_start_pos(3) = -1.3348;
-  joint_start_pos(4) = 0.0;
-  joint_start_pos(5) = 1.4959;
-//  joint_start_pos(6) = 0;
-//  joint_start_pos(7) = 0;
+  joint_start_pos(3) = 0;
+  joint_start_pos(4) = 1;
+  joint_start_pos(5) = 0;
+  joint_start_pos(6) = 0;
+  joint_start_pos(7) = 0;
+
+  Eigen::VectorXd joint_new_pos(8);
+  joint_new_pos(0) = 0;
+  joint_new_pos(1) = 1;
+  joint_new_pos(2) = 0.0;
+  joint_new_pos(3) = 0;
+  joint_new_pos(4) = 1;
+  joint_new_pos(5) = 0;
+  joint_new_pos(6) = 0;
+  joint_new_pos(7) = 0;
 
   env_->setState(joint_names, joint_start_pos);
 
   // Create manipulator information for program
   ManipulatorInfo mi;
-  mi.manipulator = "manipulator_aux";
-  mi.working_frame = "part";
+  mi.manipulator = "full_manipulator";
+  //mi.manipulator = "manipulator";
+  mi.working_frame = "positioner_tool0";  //TODO Try the manipulator tool
   mi.tcp = tesseract_planning::ToolCenterPoint("tool0", false);  // true - indicates this is an external TCP
   // Create Program
   CompositeInstruction program("FREESPACE", CompositeInstructionOrder::ORDERED, mi);
@@ -173,27 +183,29 @@ bool AbbPlannerExample::run()
   // Waypoints for the program
   //TODO: The start point should match the joint state, we can use getState to know the position of the robot
   Waypoint wp_start = StateWaypoint(joint_names, joint_start_pos);
+  Waypoint wp_new = StateWaypoint(joint_names, joint_new_pos);
   Waypoint wp0 = CartesianWaypoint(getPoses()[0]);
   Waypoint wp1 = CartesianWaypoint(getPoses()[1]);
-  Waypoint wp2 = CartesianWaypoint(getPoses()[2]);
-  Waypoint wp3 = CartesianWaypoint(getPoses()[3]);
+  //Waypoint wp2 = CartesianWaypoint(getPoses()[2]);
+  //Waypoint wp3 = CartesianWaypoint(getPoses()[3]);
 
   // Plan motion from start to end
   PlanInstruction start_instruction(wp_start, PlanInstructionType::START);
   program.setStartInstruction(start_instruction);
 
+  PlanInstruction new_instruction(wp_new, PlanInstructionType::FREESPACE, "FREESPACE");
+  //end_pos.setDescription("freespace_plan");
+
   PlanInstruction plan_f0(wp0, PlanInstructionType::FREESPACE, "FREESPACE");
-  PlanInstruction plan_f1(wp1, PlanInstructionType::LINEAR, "RASTER");
-  PlanInstruction plan_f2(wp2, PlanInstructionType::LINEAR, "RASTER");
-  PlanInstruction plan_f3(wp3, PlanInstructionType::LINEAR, "RASTER");
-  PlanInstruction plan_f4(wp0, PlanInstructionType::LINEAR, "FREESPACE");
+  PlanInstruction plan_f1(wp1, PlanInstructionType::FREESPACE, "FREESPACE");
 
   // Add Instructions to program
+  //program.push_back(new_instruction);
   program.push_back(plan_f0);
-  program.push_back(plan_f1);
-  program.push_back(plan_f2);
-  program.push_back(plan_f3);
-  program.push_back(plan_f4);
+  //program.push_back(new_instruction);
+  //program.push_back(plan_f1);
+  //program.push_back(new_instruction);
+  //program.push_back(plan_f1);
 
   ROS_INFO("basic cartesian motion with abb");
 
@@ -201,9 +213,47 @@ bool AbbPlannerExample::run()
   ProcessPlanningServer planning_server(std::make_shared<ROSProcessEnvironmentCache>(monitor_), 5);
   planning_server.loadDefaultProcessPlanners();
 
+    // Create a trajopt taskflow without post collision checking
+  /** @todo This matches the original example, but should update to include post collision check */
+/*  const std::string new_planner_name = "TRAJOPT_NO_POST_CHECK";
+  tesseract_planning::TrajOptTaskflowParams params;
+  params.enable_post_contact_discrete_check = false;
+  params.enable_post_contact_continuous_check = false;
+  planning_server.registerProcessPlanner(new_planner_name,
+                                         std::make_unique<tesseract_planning::TrajOptTaskflow>(params));
+*/
+/*
+  // Create TrajOpt Profile
+  auto trajopt_plan_profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
+  trajopt_plan_profile->cartesian_coeff = Eigen::VectorXd::Constant(6, 1, 5);
+  trajopt_plan_profile->cartesian_coeff(3) = 2;
+  trajopt_plan_profile->cartesian_coeff(4) = 2;
+  trajopt_plan_profile->cartesian_coeff(5) = 0;
+
+  auto trajopt_composite_profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
+  trajopt_composite_profile->collision_constraint_config.enabled = false;
+  trajopt_composite_profile->collision_cost_config.enabled = false;
+  trajopt_composite_profile->collision_cost_config.safety_margin = 0.025;
+  trajopt_composite_profile->collision_cost_config.type = trajopt::CollisionEvaluatorType::SINGLE_TIMESTEP;
+  trajopt_composite_profile->collision_cost_config.coeff = 20;
+*/
+  auto trajopt_solver_profile = std::make_shared<tesseract_planning::TrajOptDefaultSolverProfile>();
+  trajopt_solver_profile->convex_solver = sco::ModelType::OSQP;
+  trajopt_solver_profile->opt_info.max_iter = 1;
+  trajopt_solver_profile->opt_info.min_approx_improve = 1e-3;
+  trajopt_solver_profile->opt_info.min_trust_box_size = 1e-3;
+
+//  planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptPlanProfile>("CARTESIAN", trajopt_plan_profile);
+//  planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptCompositeProfile>("DEFAULT",
+//                                                                                         trajopt_composite_profile);
+  planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptSolverProfile>("DEFAULT",
+                                                                                    trajopt_solver_profile);
+                                                          
+
   // Create Process Planning Request
   ProcessPlanningRequest request;
   request.name = tesseract_planning::process_planner_names::TRAJOPT_PLANNER_NAME;
+  //request.name = new_planner_name;
   request.instructions = Instruction(program);
 
   // Print Diagnostics
@@ -211,8 +261,24 @@ bool AbbPlannerExample::run()
 
   // Solve process plan
   ProcessPlanningFuture response = planning_server.run(request);
-  planning_server.waitForAll();
+  response.results->print();
+  if (response.interface->isSuccessful())
+    ROS_INFO("True interface");
+  else
+    ROS_INFO("False Interface");
 
+  if (response.ready())
+    ROS_INFO("True ready");
+  else
+    ROS_INFO("False ready");
+
+  planning_server.waitForAll();
+  ROS_INFO("Waiting is done");
+  if (response.ready())
+    ROS_INFO("True ready");
+  else
+    ROS_INFO("False ready");
+  response.results->print();
   // Plot Process Trajectory
   if (rviz_ && plotter != nullptr && plotter->isConnected())
   {

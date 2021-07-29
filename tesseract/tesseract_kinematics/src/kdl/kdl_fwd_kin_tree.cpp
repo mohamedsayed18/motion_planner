@@ -82,6 +82,14 @@ Eigen::Isometry3d KDLFwdKinTree::calcFwdKinHelper(const KDL::JntArray& kdl_joint
   Eigen::Isometry3d pose;
   KDLToEigen(kdl_pose, pose);
 
+  std::stringstream ss;
+  ss << pose.matrix();
+  CONSOLE_BRIDGE_logWarn(ss.str().c_str());
+
+  using namespace backward;
+  StackTrace st; st.load_here(32);
+  Printer p; p.print(st);
+  
   return pose;
 }
 
@@ -199,6 +207,8 @@ void KDLFwdKinTree::setLimits(tesseract_common::KinematicLimits limits)
 
   limits_ = std::move(limits);
 }
+
+std::vector<Eigen::Index> KDLFwdKinTree::getRedundancyCapableJointIndices() const { return redundancy_indices_; }
 
 unsigned int KDLFwdKinTree::numJoints() const { return static_cast<unsigned>(joint_list_.size()); }
 
@@ -320,6 +330,22 @@ bool KDLFwdKinTree::init(tesseract_scene_graph::SceneGraph::ConstPtr scene_graph
 
   assert(joint_names.size() == joint_list_.size());
 
+  // Get redundancy indices
+  redundancy_indices_.clear();
+  for (std::size_t i = 0; i < joint_list_.size(); ++i)
+  {
+    const auto& joint = scene_graph_->getJoint(joint_list_[i]);
+    switch (joint->type)
+    {
+      case tesseract_scene_graph::JointType::REVOLUTE:
+      case tesseract_scene_graph::JointType::CONTINUOUS:
+        redundancy_indices_.push_back(static_cast<Eigen::Index>(i));
+        break;
+      default:
+        break;
+    }
+  }
+
   fk_solver_ = std::make_unique<KDL::TreeFkSolverPos_recursive>(kdl_tree_);
   jac_solver_ = std::make_unique<KDL::TreeJntToJacSolver>(kdl_tree_);
 
@@ -342,6 +368,7 @@ bool KDLFwdKinTree::init(const KDLFwdKinTree& kin)
   joint_list_ = kin.joint_list_;
   link_list_ = kin.link_list_;
   active_link_list_ = kin.active_link_list_;
+  redundancy_indices_ = kin.redundancy_indices_;
   fk_solver_ = std::make_unique<KDL::TreeFkSolverPos_recursive>(kdl_tree_);
   jac_solver_ = std::make_unique<KDL::TreeJntToJacSolver>(kdl_tree_);
   scene_graph_ = kin.scene_graph_;

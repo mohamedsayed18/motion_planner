@@ -30,7 +30,7 @@
     <!-- If needed, broadcast static tf for robot root -->
     <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 world base_link 100" />
 
-    <node pkg="abb_example" type="abb_example_abb_planner_example_node" name="ABB_Node">
+    <node pkg="abb_example" type="abb_example_abb_planner_example_node" name="ABB_Node" output="screen">
       <param name="plotting" type="bool" value="$(arg plotting)"/>
       <param name="rviz" type="bool" value="$(arg rviz)"/>
       <param name="range" type="double" value="$(arg range)"/>

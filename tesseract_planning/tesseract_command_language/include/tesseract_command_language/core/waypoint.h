@@ -35,6 +35,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/unique_ptr.hpp>
+#include <boost/serialization/export.hpp>
 #include <boost/type_traits/is_virtual_base_of.hpp>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
@@ -43,6 +44,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #ifdef SWIG
 //%template(Waypoints) std::vector<tesseract_planning::Waypoint>;
+%ignore tesseract_planning::Waypoint::getType;
 #endif  // SWIG
 
 /** @brief If shared library, this must go in the header after the class definition */

@@ -26,7 +26,7 @@
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <console_bridge/console.h>
-#include <descartes_samplers/evaluators/euclidean_distance_edge_evaluator.h>
+#include <descartes_light/edge_evaluators/euclidean_distance_edge_evaluator.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_common/types.h>
@@ -108,6 +108,10 @@ int main(int /*argc*/, char** /*argv*/)
 
   auto fwd_kin = env->getManipulatorManager()->getFwdKinematicSolver(manip.manipulator);
   auto inv_kin = env->getManipulatorManager()->getInvKinematicSolver(manip.manipulator);
+
+  // Synchronize the inverse kinematics with the forward kinematics
+  inv_kin->synchronize(fwd_kin);
+
   auto cur_state = env->getCurrentState();
 
   CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator"));
