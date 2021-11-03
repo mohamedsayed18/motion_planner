@@ -62,7 +62,7 @@ inline bool checkKinematics(const KinematicGroup& manip, double tol = 1e-3)
     joint_angles2[t] = M_PI / 2;
 
     auto poses1 = manip.calcFwdKin(joint_angles2);
-    test1 = poses1.at(working_frame).inverse() * poses1.at(tip_link);  // tool with respect to working_frame
+    test1 = poses1.at(working_frame).inverse() * poses1.at(tip_link);
     KinGroupIKInput ik_input(test1, working_frame, tip_link);
     IKSolutions sols = manip.calcInvKin({ ik_input }, seed_angles);
     for (const auto& sol : sols)
@@ -70,13 +70,11 @@ inline bool checkKinematics(const KinematicGroup& manip, double tol = 1e-3)
       auto poses2 = manip.calcFwdKin(sol);
       test2 = poses2.at(working_frame).inverse() * poses2.at(tip_link);
 
-      // if ((test1.translation() - test2.translation()).norm() > tol)
-      // {
-      //   std::cout << "Test1 Translation: " << test1.translation() << "Test2 Translation" << test2.translation()
-      //             << std::endl;
-      //   CONSOLE_BRIDGE_logError("checkKinematics: Manipulator translation norm is greater than tolerance %f!", tol);
-      //   return false;
-      // }
+      if ((test1.translation() - test2.translation()).norm() > tol)
+      {
+        CONSOLE_BRIDGE_logError("checkKinematics: Manipulator translation norm is greater than tolerance %f!", tol);
+        return false;
+      }
 
       if (Eigen::Quaterniond(test1.linear()).angularDistance(Eigen::Quaterniond(test2.linear())) > tol)
       {
@@ -95,3 +93,4 @@ inline bool checkKinematics(const KinematicGroup& manip, double tol = 1e-3)
 
 }  // namespace tesseract_kinematics
 #endif  // TESSERACT_KINEMATICS_VALIDATE_H
+
