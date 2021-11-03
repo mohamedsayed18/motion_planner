@@ -34,7 +34,7 @@ TRAJOPT_IGNORE_WARNINGS_POP
 
 #include <trajopt_ifopt/variable_sets/joint_position_variable.h>
 
-namespace trajopt
+namespace trajopt_ifopt
 {
 /**
  * @brief This creates a joint position constraint. Allows bounds to be set on a joint position
@@ -50,20 +50,24 @@ public:
    * @param targets Target joint position (length should be n_dof). Upper and lower bounds are set to this value
    * @param position_vars Variables to which this constraint is applied. Note that all variables should have the same
    * number of components (joint DOF)
+   * @param coeffs The joint coefficients to use as weights. If size of 1 then the values is replicated for each joint.
    * @param name Name of the constraint
    */
   JointPosConstraint(const Eigen::VectorXd& targets,
                      const std::vector<JointPosition::ConstPtr>& position_vars,
+                     const Eigen::VectorXd& coeffs,
                      const std::string& name = "JointPos");
 
   /**
    * @brief JointPosConstraint
    * @param bounds Bounds on target joint position (length should be n_dof)
    * @param position_vars Variables to which this constraint is applied
+   * @param coeffs The joint coefficients to use as weights. If size of 1 then the values is replicated for each joint.
    * @param name Name of the constraint
    */
   JointPosConstraint(const std::vector<ifopt::Bounds>& bounds,
                      const std::vector<JointPosition::ConstPtr>& position_vars,
+                     const Eigen::VectorXd& coeffs,
                      const std::string& name = "JointPos");
 
   /**
@@ -92,6 +96,9 @@ private:
   /** @brief The number of JointPositions passed in */
   long n_vars_;
 
+  /** @brief The coeff to apply to error and gradient */
+  Eigen::VectorXd coeffs_;
+
   /** @brief Bounds on the positions of each joint */
   std::vector<ifopt::Bounds> bounds_;
 
@@ -100,5 +107,5 @@ private:
    * Do not access them directly. Instead use this->GetVariables()->GetComponent(position_var->GetName())->GetValues()*/
   std::vector<JointPosition::ConstPtr> position_vars_;
 };
-};  // namespace trajopt
+};  // namespace trajopt_ifopt
 #endif

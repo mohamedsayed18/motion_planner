@@ -35,7 +35,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_ros_examples/basic_cartesian_example.h>
-#include <tesseract_environment/core/utils.h>
+#include <tesseract_environment/utils.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/command_language.h>
@@ -46,6 +46,12 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_planning_server/tesseract_planning_server.h>
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
+
+#include <tesseract_motion_planners/trajopt_ifopt/profile/trajopt_ifopt_default_composite_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
+
+#include <tesseract_motion_planners/trajopt_ifopt/profile/trajopt_ifopt_default_plan_profile.h>
+#include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 
 using namespace tesseract_environment;
 using namespace tesseract_scene_graph;
@@ -108,8 +114,12 @@ Command::Ptr BasicCartesianExample::addPointCloud()
   return std::make_shared<tesseract_environment::AddLinkCommand>(link_octomap, joint_octomap);
 }
 
-BasicCartesianExample::BasicCartesianExample(const ros::NodeHandle& nh, bool plotting, bool rviz)
-  : Example(plotting, rviz), nh_(nh)
+BasicCartesianExample::BasicCartesianExample(const ros::NodeHandle& nh,
+                                             bool plotting,
+                                             bool rviz,
+                                             bool ifopt,
+                                             bool debug)
+  : Example(plotting, rviz), nh_(nh), ifopt_(ifopt), debug_(debug)
 {
 }
 
@@ -134,8 +144,8 @@ bool BasicCartesianExample::run()
   nh_.getParam(ROBOT_DESCRIPTION_PARAM, urdf_xml_string);
   nh_.getParam(ROBOT_SEMANTIC_PARAM, srdf_xml_string);
 
-  ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-  if (!env_->init<OFKTStateSolver>(urdf_xml_string, srdf_xml_string, locator))
+  auto locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+  if (!env_->init(urdf_xml_string, srdf_xml_string, locator))
     return false;
 
   // Create monitor
@@ -174,8 +184,12 @@ bool BasicCartesianExample::run()
 
   env_->setState(joint_names, joint_pos);
 
+  if (debug_)
+    console_bridge::setLogLevel(console_bridge::LogLevel::CONSOLE_BRIDGE_LOG_DEBUG);
+
   // Create Program
-  CompositeInstruction program("cartesian_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator"));
+  CompositeInstruction program(
+      "cartesian_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator", "base_link", "tool0"));
 
   // Start Joint Position for the program
   Waypoint wp0 = StateWaypoint(joint_names, joint_pos);
@@ -213,11 +227,52 @@ bool BasicCartesianExample::run()
 
   // Create Process Planning Request
   ProcessPlanningRequest request;
-  request.name = tesseract_planning::process_planner_names::TRAJOPT_PLANNER_NAME;
+  if (ifopt_)
+  {
+    auto composite_profile = std::make_shared<tesseract_planning::TrajOptIfoptDefaultCompositeProfile>();
+    composite_profile->collision_cost_config->type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
+    composite_profile->collision_constraint_config->type = tesseract_collision::CollisionEvaluatorType::LVS_DISCRETE;
+    composite_profile->smooth_velocities = true;
+    planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptIfoptCompositeProfile>("cartesian_program",
+                                                                                                composite_profile);
+
+    auto plan_profile = std::make_shared<tesseract_planning::TrajOptIfoptDefaultPlanProfile>();
+    plan_profile->cartesian_coeff = Eigen::VectorXd::Ones(6);
+    plan_profile->joint_coeff = Eigen::VectorXd::Ones(7);
+    planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptIfoptPlanProfile>("RASTER", plan_profile);
+    planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptIfoptPlanProfile>("freespace_profile",
+                                                                                           plan_profile);
+
+    request.name = tesseract_planning::process_planner_names::TRAJOPT_IFOPT_PLANNER_NAME;
+  }
+  else
+  {
+    auto composite_profile = std::make_shared<tesseract_planning::TrajOptDefaultCompositeProfile>();
+    composite_profile->collision_cost_config.enabled = true;
+    composite_profile->collision_constraint_config.enabled = true;
+    composite_profile->smooth_velocities = true;
+    composite_profile->smooth_accelerations = false;
+    composite_profile->smooth_jerks = false;
+    composite_profile->velocity_coeff = Eigen::VectorXd::Ones(1);
+    planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptCompositeProfile>("cartesian_program",
+                                                                                           composite_profile);
+
+    auto plan_profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
+    plan_profile->cartesian_coeff = Eigen::VectorXd::Ones(6);
+    plan_profile->joint_coeff = Eigen::VectorXd::Ones(7);
+    planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptPlanProfile>("RASTER", plan_profile);
+    planning_server.getProfiles()->addProfile<tesseract_planning::TrajOptPlanProfile>("freespace_profile",
+                                                                                      plan_profile);
+
+    request.name = tesseract_planning::process_planner_names::TRAJOPT_PLANNER_NAME;
+  }
   request.instructions = Instruction(program);
 
   // Print Diagnostics
   request.instructions.print("Program: ");
+
+  if (rviz_ && plotter != nullptr && plotter->isConnected())
+    plotter->waitForInput("Hit Enter to solve for trajectory.");
 
   // Solve process plan
   ProcessPlanningFuture response = planning_server.run(request);
@@ -228,10 +283,11 @@ bool BasicCartesianExample::run()
   {
     plotter->waitForInput();
     const auto& ci = response.results->as<tesseract_planning::CompositeInstruction>();
-    tesseract_common::Toolpath toolpath = tesseract_planning::toToolpath(ci, env_);
+    tesseract_common::Toolpath toolpath = tesseract_planning::toToolpath(ci, *env_);
     tesseract_common::JointTrajectory trajectory = tesseract_planning::toJointTrajectory(ci);
+    auto state_solver = env_->getStateSolver();
     plotter->plotMarker(ToolpathMarker(toolpath));
-    plotter->plotTrajectory(trajectory, env_->getStateSolver());
+    plotter->plotTrajectory(trajectory, *state_solver);
   }
 
   ROS_INFO("Final trajectory is collision free");

@@ -28,95 +28,153 @@
 
 namespace tesseract_srdf
 {
-bool OPWKinematicParameters::operator==(const OPWKinematicParameters& rhs) const
-{
-  bool success = true;
-  success &= (tesseract_common::almostEqualRelativeAndAbs(a1, rhs.a1, 1e-6));
-  success &= (tesseract_common::almostEqualRelativeAndAbs(a2, rhs.a2, 1e-6));
-  success &= (tesseract_common::almostEqualRelativeAndAbs(b, rhs.b, 1e-6));
-  success &= (tesseract_common::almostEqualRelativeAndAbs(c1, rhs.c1, 1e-6));
-  success &= (tesseract_common::almostEqualRelativeAndAbs(c2, rhs.c2, 1e-6));
-  success &= (tesseract_common::almostEqualRelativeAndAbs(c3, rhs.c3, 1e-6));
-  success &= (tesseract_common::almostEqualRelativeAndAbs(c4, rhs.c4, 1e-6));
-
-  for (std::size_t i = 0; i < 6; i++)
-  {
-    success &= (tesseract_common::almostEqualRelativeAndAbs(offsets[i], rhs.offsets[i], 1e-6));
-    success &= (sign_corrections[i] == rhs.sign_corrections[i]);
-  }
-
-  return success;
-}
-
-bool OPWKinematicParameters::operator!=(const OPWKinematicParameters& rhs) const { return !(*this == rhs); }
-
-bool ROPKinematicParameters::operator==(const ROPKinematicParameters& rhs) const
-{
-  bool success = true;
-  success &= (solver_name == rhs.solver_name);
-  success &= (manipulator_group == rhs.manipulator_group);
-  success &= (manipulator_ik_solver == rhs.manipulator_ik_solver);
-  success &= (tesseract_common::almostEqualRelativeAndAbs(manipulator_reach, rhs.manipulator_reach, 1e-6));
-  success &= (positioner_group == rhs.positioner_group);
-  success &= (positioner_fk_solver == rhs.positioner_fk_solver);
-  success &= (positioner_sample_resolution.size() == rhs.positioner_sample_resolution.size());
-  for (const auto& joint_pair : positioner_sample_resolution)
-  {
-    auto it = rhs.positioner_sample_resolution.find(joint_pair.first);
-    success &= (it != rhs.positioner_sample_resolution.end());
-    if (!success)
-      break;
-
-    success &= (tesseract_common::almostEqualRelativeAndAbs(joint_pair.second, it->second, 1e-6));
-    if (!success)
-      break;
-  }
-
-  return success;
-}
-
-bool ROPKinematicParameters::operator!=(const ROPKinematicParameters& rhs) const { return !(*this == rhs); }
-
-bool REPKinematicParameters::operator==(const REPKinematicParameters& rhs) const
-{
-  bool success = true;
-  success &= (solver_name == rhs.solver_name);
-  success &= (manipulator_group == rhs.manipulator_group);
-  success &= (manipulator_ik_solver == rhs.manipulator_ik_solver);
-  success &= (tesseract_common::almostEqualRelativeAndAbs(manipulator_reach, rhs.manipulator_reach, 1e-6));
-  success &= (positioner_group == rhs.positioner_group);
-  success &= (positioner_fk_solver == rhs.positioner_fk_solver);
-  success &= (positioner_sample_resolution.size() == rhs.positioner_sample_resolution.size());
-  for (const auto& joint_pair : positioner_sample_resolution)
-  {
-    auto it = rhs.positioner_sample_resolution.find(joint_pair.first);
-    success &= (it != rhs.positioner_sample_resolution.end());
-    if (!success)
-      break;
-
-    success &= (tesseract_common::almostEqualRelativeAndAbs(joint_pair.second, it->second, 1e-6));
-    if (!success)
-      break;
-  }
-
-  return success;
-}
-
-bool REPKinematicParameters::operator!=(const REPKinematicParameters& rhs) const { return !(*this == rhs); }
-
 void KinematicsInformation::clear()
 {
   group_names.clear();
   chain_groups.clear();
   joint_groups.clear();
   link_groups.clear();
-  group_rop_kinematics.clear();
-  group_rep_kinematics.clear();
   group_states.clear();
   group_tcps.clear();
-  group_opw_kinematics.clear();
-  group_default_fwd_kin.clear();
-  group_default_inv_kin.clear();
+  kinematics_plugin_info.clear();
 }
 
+void KinematicsInformation::insert(const KinematicsInformation& other)
+{
+  group_names.insert(other.group_names.begin(), other.group_names.end());
+  chain_groups.insert(other.chain_groups.begin(), other.chain_groups.end());
+  joint_groups.insert(other.joint_groups.begin(), other.joint_groups.end());
+  link_groups.insert(other.link_groups.begin(), other.link_groups.end());
+  for (const auto& group : other.group_states)
+  {
+    auto it = group_states.find(group.first);
+    if (it == group_states.end())
+    {
+      group_states[group.first] = group.second;
+    }
+    else
+    {
+      it->second.insert(group.second.begin(), group.second.end());
+    }
+  }
+
+  for (const auto& group : other.group_tcps)
+  {
+    auto it = group_tcps.find(group.first);
+    if (it == group_tcps.end())
+    {
+      group_tcps[group.first] = group.second;
+    }
+    else
+    {
+      it->second.insert(group.second.begin(), group.second.end());
+    }
+  }
+
+  kinematics_plugin_info.insert(other.kinematics_plugin_info);
+}
+
+bool KinematicsInformation::hasGroup(const std::string& group_name) const
+{
+  return std::find(group_names.begin(), group_names.end(), group_name) != group_names.end();
+}
+
+void KinematicsInformation::addChainGroup(const std::string& group_name, const ChainGroup& chain_group)
+{
+  chain_groups[group_name] = chain_group;
+  group_names.insert(group_name);
+}
+
+void KinematicsInformation::removeChainGroup(const std::string& group_name)
+{
+  if (chain_groups.erase(group_name) > 0)
+    group_names.erase(group_name);
+}
+
+bool KinematicsInformation::hasChainGroup(const std::string& group_name) const
+{
+  return (chain_groups.find(group_name) != chain_groups.end());
+}
+
+void KinematicsInformation::addJointGroup(const std::string& group_name, const JointGroup& joint_group)
+{
+  joint_groups[group_name] = joint_group;
+  group_names.insert(group_name);
+}
+
+void KinematicsInformation::removeJointGroup(const std::string& group_name)
+{
+  if (joint_groups.erase(group_name) > 0)
+    group_names.erase(group_name);
+}
+
+bool KinematicsInformation::hasJointGroup(const std::string& group_name) const
+{
+  return (joint_groups.find(group_name) != joint_groups.end());
+}
+
+void KinematicsInformation::addLinkGroup(const std::string& group_name, const LinkGroup& link_group)
+{
+  link_groups[group_name] = link_group;
+  group_names.insert(group_name);
+}
+
+void KinematicsInformation::removeLinkGroup(const std::string& group_name)
+{
+  if (link_groups.erase(group_name) > 0)
+    group_names.erase(group_name);
+}
+
+bool KinematicsInformation::hasLinkGroup(const std::string& group_name) const
+{
+  return (link_groups.find(group_name) != link_groups.end());
+}
+
+void KinematicsInformation::addGroupJointState(const std::string& group_name,
+                                               const std::string& state_name,
+                                               const GroupsJointState& joint_state)
+{
+  group_states[group_name][state_name] = joint_state;
+}
+
+void KinematicsInformation::removeGroupJointState(const std::string& group_name, const std::string& state_name)
+{
+  group_states[group_name].erase(state_name);
+
+  if (group_states[group_name].empty())
+    group_states.erase(group_name);
+}
+
+bool KinematicsInformation::hasGroupJointState(const std::string& group_name, const std::string& state_name) const
+{
+  auto it = group_states.find(group_name);
+  if (it == group_states.end())
+    return false;
+
+  return (it->second.find(state_name) != it->second.end());
+}
+
+void KinematicsInformation::addGroupTCP(const std::string& group_name,
+                                        const std::string& tcp_name,
+                                        const Eigen::Isometry3d& tcp)
+{
+  group_tcps[group_name][tcp_name] = tcp;
+}
+
+void KinematicsInformation::removeGroupTCP(const std::string& group_name, const std::string& tcp_name)
+{
+  group_tcps.at(group_name).erase(tcp_name);
+
+  if (group_tcps[group_name].empty())
+    group_tcps.erase(group_name);
+}
+
+bool KinematicsInformation::hasGroupTCP(const std::string& group_name, const std::string& tcp_name) const
+{
+  auto it = group_tcps.find(group_name);
+  if (it == group_tcps.end())
+    return false;
+
+  return (it->second.find(tcp_name) != it->second.end());
+}
 }  // namespace tesseract_srdf

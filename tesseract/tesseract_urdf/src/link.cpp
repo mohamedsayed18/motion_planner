@@ -33,7 +33,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_scene_graph/utils.h>
 #include <tesseract_scene_graph/link.h>
-#include <tesseract_scene_graph/resource_locator.h>
+#include <tesseract_common/resource_locator.h>
 #include <tesseract_urdf/link.h>
 #include <tesseract_urdf/inertial.h>
 #include <tesseract_urdf/visual.h>
@@ -41,7 +41,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 tesseract_scene_graph::Link::Ptr
 tesseract_urdf::parseLink(const tinyxml2::XMLElement* xml_element,
-                          const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+                          const tesseract_common::ResourceLocator& locator,
                           std::unordered_map<std::string, tesseract_scene_graph::Material::Ptr>& available_materials,
                           int version)
 {
@@ -67,7 +67,7 @@ tesseract_urdf::parseLink(const tinyxml2::XMLElement* xml_element,
   }
 
   // get visual if it exists
-  for (const tinyxml2::XMLElement* visual = xml_element->FirstChildElement("visual"); visual;
+  for (const tinyxml2::XMLElement* visual = xml_element->FirstChildElement("visual"); visual != nullptr;
        visual = visual->NextSiblingElement("visual"))
   {
     std::vector<tesseract_scene_graph::Visual::Ptr> temp_visual;
@@ -84,7 +84,7 @@ tesseract_urdf::parseLink(const tinyxml2::XMLElement* xml_element,
   }
 
   // get collision if exists
-  for (const tinyxml2::XMLElement* collision = xml_element->FirstChildElement("collision"); collision;
+  for (const tinyxml2::XMLElement* collision = xml_element->FirstChildElement("collision"); collision != nullptr;
        collision = collision->NextSiblingElement("collision"))
   {
     std::vector<tesseract_scene_graph::Collision::Ptr> temp_collision;
@@ -102,4 +102,60 @@ tesseract_urdf::parseLink(const tinyxml2::XMLElement* xml_element,
   }
 
   return l;
+}
+
+tinyxml2::XMLElement* tesseract_urdf::writeLink(const std::shared_ptr<const tesseract_scene_graph::Link>& link,
+                                                tinyxml2::XMLDocument& doc,
+                                                const std::string& directory)
+{
+  if (link == nullptr)
+    std::throw_with_nested(std::runtime_error("Link is nullptr and cannot be converted to XML"));
+  tinyxml2::XMLElement* xml_element = doc.NewElement("link");
+
+  // Set name
+  xml_element->SetAttribute("name", link->getName().c_str());
+
+  // Set inertia if it exists
+  if (link->inertial != nullptr)
+  {
+    tinyxml2::XMLElement* xml_inertial = writeInertial(link->inertial, doc);
+    xml_element->InsertEndChild(xml_inertial);
+  }
+
+  // Set visual if it exists
+  int id = -1;
+  if (link->visual.size() > 1)
+    id = 0;
+  for (const tesseract_scene_graph::Visual::Ptr& vis : link->visual)
+  {
+    try
+    {
+      tinyxml2::XMLElement* xml_visual = writeVisual(vis, doc, directory, link->getName(), id++);
+      xml_element->InsertEndChild(xml_visual);
+    }
+    catch (...)
+    {
+      std::throw_with_nested(std::runtime_error("Could not write visual to XML for link `" + link->getName() + "`!"));
+    }
+  }
+
+  // Set collision if it exists
+  id = -1;
+  if (link->collision.size() > 1)
+    id = 0;
+  for (const tesseract_scene_graph::Collision::Ptr& col : link->collision)
+  {
+    try
+    {
+      tinyxml2::XMLElement* xml_collision = writeCollision(col, doc, directory, link->getName(), id++);
+      xml_element->InsertEndChild(xml_collision);
+    }
+    catch (...)
+    {
+      std::throw_with_nested(
+          std::runtime_error("Could not write collision to XML for link `" + link->getName() + "`!"));
+    }
+  }
+
+  return xml_element;
 }

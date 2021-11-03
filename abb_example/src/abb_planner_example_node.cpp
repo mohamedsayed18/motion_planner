@@ -28,7 +28,7 @@
 
 using namespace tesseract_ros_examples;
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   // why two node handle
   ros::init(argc, argv, "abb_planner_example_node");
@@ -47,8 +47,6 @@ int main(int argc, char** argv)
   pnh.param("range", range, range);
   pnh.param("planning_time", planning_time, planning_time);
 
-
   AbbPlannerExample example(nh, plotting, rviz, range, planning_time);
   example.run();
-
 }

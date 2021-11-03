@@ -45,7 +45,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 namespace tesseract_planning
 {
-ProcessPlanningServer::ProcessPlanningServer(EnvironmentCache::Ptr cache, size_t n)
+ProcessPlanningServer::ProcessPlanningServer(EnvironmentCache::ConstPtr cache, size_t n)
   : cache_(std::move(cache)), executor_(std::make_shared<tf::Executor>(n))
 {
   /** @todo Need to figure out if these can associated with an individual run versus global */
@@ -55,7 +55,7 @@ ProcessPlanningServer::ProcessPlanningServer(EnvironmentCache::Ptr cache, size_t
 ProcessPlanningServer::ProcessPlanningServer(tesseract_environment::Environment::ConstPtr environment,
                                              int cache_size,
                                              size_t n)
-  : cache_(std::make_shared<ProcessEnvironmentCache>(environment, cache_size))
+  : cache_(std::make_shared<ProcessEnvironmentCache>(std::move(environment), cache_size))
   , executor_(std::make_shared<tf::Executor>(n))
 {
   /** @todo Need to figure out if these can associated with an individual run versus global */
@@ -73,6 +73,7 @@ void ProcessPlanningServer::registerProcessPlanner(const std::string& name, Task
 void ProcessPlanningServer::loadDefaultProcessPlanners()
 {
   registerProcessPlanner(process_planner_names::TRAJOPT_PLANNER_NAME, createTrajOptGenerator());
+  registerProcessPlanner(process_planner_names::TRAJOPT_IFOPT_PLANNER_NAME, createTrajOptIfoptGenerator());
   registerProcessPlanner(process_planner_names::OMPL_PLANNER_NAME, createOMPLGenerator());
   registerProcessPlanner(process_planner_names::DESCARTES_PLANNER_NAME, createDescartesGenerator());
   registerProcessPlanner(process_planner_names::CARTESIAN_PLANNER_NAME, createCartesianGenerator());
@@ -111,7 +112,6 @@ std::vector<std::string> ProcessPlanningServer::getAvailableProcessPlanners() co
 ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& request)
 {
   CONSOLE_BRIDGE_logInform("Tesseract Planning Server Received Request!");
-  //CONSOLE_BRIDGE_logWarn("Start the process planning");
   ProcessPlanningFuture response;
   response.plan_profile_remapping = std::make_unique<const PlannerProfileRemapping>(request.plan_profile_remapping);
   response.composite_profile_remapping =
@@ -121,18 +121,16 @@ ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& r
   auto& composite_program = response.input->as<CompositeInstruction>();
   ManipulatorInfo mi = composite_program.getManipulatorInfo();
   response.global_manip_info = std::make_unique<const ManipulatorInfo>(mi);
-  CONSOLE_BRIDGE_logWarn("Get the input instructions & Manipulator");
+
   bool has_seed{ false };
   if (!isNullInstruction(request.seed))
   {
     has_seed = true;
     response.results = std::make_unique<Instruction>(request.seed);
-    CONSOLE_BRIDGE_logWarn("Null Instruction");
   }
   else
   {
     response.results = std::make_unique<Instruction>(generateSkeletonSeed(composite_program));
-    CONSOLE_BRIDGE_logWarn("Not a Null Instruction");
   }
 
   auto it = process_planners_.find(request.name);
@@ -145,8 +143,8 @@ ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& r
   tesseract_environment::Environment::Ptr tc = cache_->getCachedEnvironment();
 
   // Set the env state if provided
-  if (request.env_state != nullptr)
-    tc->setState(request.env_state->joints);
+  if (!request.env_state.joints.empty())
+    tc->setState(request.env_state.joints);
 
   // This makes sure the Joint and State Waypoints match the same order as the kinematics
   if (formatProgram(composite_program, *tc))
@@ -180,13 +178,12 @@ ProcessPlanningFuture ProcessPlanningServer::run(const ProcessPlanningRequest& r
     response.taskflow_container.taskflow->dump(out_data);
     out_data.close();
   }
-  CONSOLE_BRIDGE_logWarn("The program is above");
+
   response.process_future = executor_->run(*(response.taskflow_container.taskflow));
-  CONSOLE_BRIDGE_logWarn("Return response");
   return response;
 }
 
-std::future<void> ProcessPlanningServer::run(tf::Taskflow& taskflow) { return executor_->run(taskflow); }
+tf::Future<void> ProcessPlanningServer::run(tf::Taskflow& taskflow) { return executor_->run(taskflow); }
 
 void ProcessPlanningServer::waitForAll() { executor_->wait_for_all(); }
 

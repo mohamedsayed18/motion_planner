@@ -1,10 +1,11 @@
 #pragma once
-#include <tesseract_environment/core/environment.h>
-#include <tesseract_environment/core/utils.h>
-#include <tesseract_kinematics/core/forward_kinematics.h>
+#include <tesseract_environment/environment.h>
+#include <tesseract_environment/utils.h>
+#include <tesseract_kinematics/core/joint_group.h>
 #include <trajopt/cache.hxx>
 #include <trajopt/common.hpp>
 #include <trajopt_sco/modeling.hpp>
+#include <trajopt_utils/utils.hpp>
 
 namespace trajopt
 {
@@ -64,7 +65,7 @@ struct GradientResults
   GradientResults(const Eigen::Vector2d& data) : data(data) {}
 
   /** @brief The gradient results data for LinkA and LinkB */
-  LinkGradientResults gradients[2];
+  std::array<LinkGradientResults, 2> gradients;
 
   /** @brief The link pair safety margin data */
   const Eigen::Vector2d& data;
@@ -84,11 +85,9 @@ struct CollisionEvaluator
   using Ptr = std::shared_ptr<CollisionEvaluator>;
   using ConstPtr = std::shared_ptr<const CollisionEvaluator>;
 
-  CollisionEvaluator(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  CollisionEvaluator(tesseract_kinematics::JointGroup::ConstPtr manip,
                      tesseract_environment::Environment::ConstPtr env,
-                     tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                     const Eigen::Isometry3d& world_to_base,
-                     SafetyMarginData::ConstPtr safety_margin_data,
+                     util::SafetyMarginData::ConstPtr safety_margin_data,
                      tesseract_collision::ContactTestType contact_test_type,
                      double longest_valid_segment_length,
                      double safety_margin_buffer,
@@ -214,26 +213,26 @@ struct CollisionEvaluator
    * @brief Get the safety margin information.
    * @return Safety margin information
    */
-  const SafetyMarginData::ConstPtr getSafetyMarginData() const { return safety_margin_data_; }
-  Cache<size_t, std::pair<tesseract_collision::ContactResultMap, tesseract_collision::ContactResultVector>, 10> m_cache;
+  util::SafetyMarginData::ConstPtr getSafetyMarginData() const { return safety_margin_data_; }
+
+  Cache<std::size_t, std::pair<tesseract_collision::ContactResultMap, tesseract_collision::ContactResultVector>>
+      m_cache{ 10 };
 
 protected:
-  tesseract_kinematics::ForwardKinematics::ConstPtr manip_;
+  tesseract_kinematics::JointGroup::ConstPtr manip_;
   tesseract_environment::Environment::ConstPtr env_;
-  tesseract_environment::AdjacencyMap::ConstPtr adjacency_map_;
-  Eigen::Isometry3d world_to_base_;
-  SafetyMarginData::ConstPtr safety_margin_data_;
-  double safety_margin_buffer_;
-  tesseract_collision::ContactTestType contact_test_type_;
-  double longest_valid_segment_length_;
-  tesseract_environment::StateSolver::Ptr state_solver_;
+  std::vector<std::string> env_active_link_names_;
+  std::vector<std::string> manip_active_link_names_;
+  std::vector<std::string> diff_active_link_names_;
+  util::SafetyMarginData::ConstPtr safety_margin_data_;
+  double safety_margin_buffer_{ 0 };
+  tesseract_collision::ContactTestType contact_test_type_{ tesseract_collision::ContactTestType::ALL };
+  double longest_valid_segment_length_{ 0.05 };
   sco::VarVector vars0_;
   sco::VarVector vars1_;
-  CollisionExpressionEvaluatorType evaluator_type_;
-  std::function<tesseract_environment::EnvState::Ptr(const std::vector<std::string>& joint_names,
-                                                     const Eigen::Ref<const Eigen::VectorXd>& joint_values)>
-      get_state_fn_;
-  bool dynamic_environment_;
+  CollisionExpressionEvaluatorType evaluator_type_{ CollisionExpressionEvaluatorType::START_FREE_END_FREE };
+  std::function<tesseract_common::TransformMap(const Eigen::Ref<const Eigen::VectorXd>& joint_values)> get_state_fn_;
+  bool dynamic_environment_{ false };
 
   void CollisionsToDistanceExpressions(sco::AffExprVector& exprs,
                                        AlignedVector<Eigen::Vector2d>& exprs_data,
@@ -354,7 +353,8 @@ protected:
    */
   void processInterpolatedCollisionResults(std::vector<tesseract_collision::ContactResultMap>& contacts_vector,
                                            tesseract_collision::ContactResultMap& contact_results,
-                                           double dt) const;
+                                           double dt,
+                                           bool discrete) const;
 
   /**
    * @brief Remove any results that are invalid.
@@ -378,11 +378,9 @@ public:
   using Ptr = std::shared_ptr<SingleTimestepCollisionEvaluator>;
   using ConstPtr = std::shared_ptr<const SingleTimestepCollisionEvaluator>;
 
-  SingleTimestepCollisionEvaluator(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  SingleTimestepCollisionEvaluator(tesseract_kinematics::JointGroup::ConstPtr manip,
                                    tesseract_environment::Environment::ConstPtr env,
-                                   tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                                   const Eigen::Isometry3d& world_to_base,
-                                   SafetyMarginData::ConstPtr safety_margin_data,
+                                   util::SafetyMarginData::ConstPtr safety_margin_data,
                                    tesseract_collision::ContactTestType contact_test_type,
                                    sco::VarVector vars,
                                    CollisionExpressionEvaluatorType type,
@@ -424,11 +422,9 @@ public:
   using Ptr = std::shared_ptr<CastCollisionEvaluator>;
   using ConstPtr = std::shared_ptr<const CastCollisionEvaluator>;
 
-  CastCollisionEvaluator(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  CastCollisionEvaluator(tesseract_kinematics::JointGroup::ConstPtr manip,
                          tesseract_environment::Environment::ConstPtr env,
-                         tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                         const Eigen::Isometry3d& world_to_base,
-                         SafetyMarginData::ConstPtr safety_margin_data,
+                         util::SafetyMarginData::ConstPtr safety_margin_data,
                          tesseract_collision::ContactTestType contact_test_type,
                          double longest_valid_segment_length,
                          sco::VarVector vars0,
@@ -449,7 +445,7 @@ public:
                       const Eigen::Ref<const Eigen::VectorXd>& dof_vals1,
                       tesseract_collision::ContactResultMap& dist_results);
   void Plot(const tesseract_visualization::Visualization::Ptr& plotter, const DblVec& x) override;
-  sco::VarVector GetVars() override { return concat(vars0_, vars1_); }
+  sco::VarVector GetVars() override { return util::concat(vars0_, vars1_); }
 
 private:
   tesseract_collision::ContinuousContactManager::Ptr contact_manager_;
@@ -458,7 +454,7 @@ private:
 
 /**
  * @brief This collision evaluator operates on two states and checks for collision between the two states using a
- * descrete collision objects at each intermediate interpolated states.
+ * discrete collision objects at each intermediate interpolated states.
  */
 struct DiscreteCollisionEvaluator : public CollisionEvaluator
 {
@@ -466,11 +462,9 @@ public:
   using Ptr = std::shared_ptr<DiscreteCollisionEvaluator>;
   using ConstPtr = std::shared_ptr<const DiscreteCollisionEvaluator>;
 
-  DiscreteCollisionEvaluator(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  DiscreteCollisionEvaluator(tesseract_kinematics::JointGroup::ConstPtr manip,
                              tesseract_environment::Environment::ConstPtr env,
-                             tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                             const Eigen::Isometry3d& world_to_base,
-                             SafetyMarginData::ConstPtr safety_margin_data,
+                             util::SafetyMarginData::ConstPtr safety_margin_data,
                              tesseract_collision::ContactTestType contact_test_type,
                              double longest_valid_segment_length,
                              sco::VarVector vars0,
@@ -491,7 +485,7 @@ public:
                       const Eigen::Ref<const Eigen::VectorXd>& dof_vals1,
                       tesseract_collision::ContactResultMap& dist_results);
   void Plot(const tesseract_visualization::Visualization::Ptr& plotter, const DblVec& x) override;
-  sco::VarVector GetVars() override { return concat(vars0_, vars1_); }
+  sco::VarVector GetVars() override { return util::concat(vars0_, vars1_); }
 
 private:
   tesseract_collision::DiscreteContactManager::Ptr contact_manager_;
@@ -502,21 +496,17 @@ class CollisionCost : public sco::Cost, public Plotter
 {
 public:
   /* constructor for single timestep */
-  CollisionCost(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  CollisionCost(tesseract_kinematics::JointGroup::ConstPtr manip,
                 tesseract_environment::Environment::ConstPtr env,
-                tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                const Eigen::Isometry3d& world_to_base,
-                SafetyMarginData::ConstPtr safety_margin_data,
+                util::SafetyMarginData::ConstPtr safety_margin_data,
                 tesseract_collision::ContactTestType contact_test_type,
                 sco::VarVector vars,
                 CollisionExpressionEvaluatorType type,
                 double safety_margin_buffer);
   /* constructor for discrete continuous and cast continuous cost */
-  CollisionCost(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  CollisionCost(tesseract_kinematics::JointGroup::ConstPtr manip,
                 tesseract_environment::Environment::ConstPtr env,
-                tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                const Eigen::Isometry3d& world_to_base,
-                SafetyMarginData::ConstPtr safety_margin_data,
+                util::SafetyMarginData::ConstPtr safety_margin_data,
                 tesseract_collision::ContactTestType contact_test_type,
                 double longest_valid_segment_length,
                 sco::VarVector vars0,
@@ -537,21 +527,17 @@ class CollisionConstraint : public sco::IneqConstraint
 {
 public:
   /* constructor for single timestep */
-  CollisionConstraint(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  CollisionConstraint(tesseract_kinematics::JointGroup::ConstPtr manip,
                       tesseract_environment::Environment::ConstPtr env,
-                      tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                      const Eigen::Isometry3d& world_to_base,
-                      SafetyMarginData::ConstPtr safety_margin_data,
+                      util::SafetyMarginData::ConstPtr safety_margin_data,
                       tesseract_collision::ContactTestType contact_test_type,
                       sco::VarVector vars,
                       CollisionExpressionEvaluatorType type,
                       double safety_margin_buffer);
   /* constructor for discrete continuous and cast continuous cost */
-  CollisionConstraint(tesseract_kinematics::ForwardKinematics::ConstPtr manip,
+  CollisionConstraint(tesseract_kinematics::JointGroup::ConstPtr manip,
                       tesseract_environment::Environment::ConstPtr env,
-                      tesseract_environment::AdjacencyMap::ConstPtr adjacency_map,
-                      const Eigen::Isometry3d& world_to_base,
-                      SafetyMarginData::ConstPtr safety_margin_data,
+                      util::SafetyMarginData::ConstPtr safety_margin_data,
                       tesseract_collision::ContactTestType contact_test_type,
                       double longest_valid_segment_length,
                       sco::VarVector vars0,

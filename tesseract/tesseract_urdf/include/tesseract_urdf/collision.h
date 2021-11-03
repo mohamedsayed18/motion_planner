@@ -35,12 +35,16 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 namespace tinyxml2
 {
 class XMLElement;
-}
+class XMLDocument;
+}  // namespace tinyxml2
 namespace tesseract_scene_graph
 {
 class Collision;
+}
+namespace tesseract_common
+{
 class ResourceLocator;
-}  // namespace tesseract_scene_graph
+}
 
 namespace tesseract_urdf
 {
@@ -52,9 +56,13 @@ namespace tesseract_urdf
  * @return A vector tesseract_scene_graph Collision objects
  */
 std::vector<std::shared_ptr<tesseract_scene_graph::Collision>>
-parseCollision(const tinyxml2::XMLElement* xml_element,
-               const std::shared_ptr<tesseract_scene_graph::ResourceLocator>& locator,
-               int version);
+parseCollision(const tinyxml2::XMLElement* xml_element, const tesseract_common::ResourceLocator& locator, int version);
+
+tinyxml2::XMLElement* writeCollision(const std::shared_ptr<const tesseract_scene_graph::Collision>& collision,
+                                     tinyxml2::XMLDocument& doc,
+                                     const std::string& directory,
+                                     const std::string& link_name,
+                                     int id);
 
 }  // namespace tesseract_urdf
 

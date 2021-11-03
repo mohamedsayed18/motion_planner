@@ -60,6 +60,7 @@ add_library(
   src/link.cpp
   src/material.cpp
   src/mesh.cpp
+  src/mesh_writer.cpp
   src/mimic.cpp
   src/octomap.cpp
   src/octree.cpp
@@ -77,13 +78,13 @@ target_link_libraries(
          tesseract::tesseract_common
          tesseract::tesseract_geometry
          tesseract::tesseract_scene_graph
-         tesseract::tesseract_collision_core
+         tesseract::tesseract_collision_bullet
          console_bridge::console_bridge)
 target_link_libraries(${PROJECT_NAME} PRIVATE Boost::boost console_bridge::console_bridge)
 target_compile_options(${PROJECT_NAME} PRIVATE ${TESSERACT_COMPILE_OPTIONS_PRIVATE})
 target_compile_options(${PROJECT_NAME} PUBLIC ${TESSERACT_COMPILE_OPTIONS_PUBLIC})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${TESSERACT_COMPILE_DEFINITIONS})
-target_clang_tidy(${PROJECT_NAME} ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+target_clang_tidy(${PROJECT_NAME} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
 target_cxx_version(${PROJECT_NAME} PUBLIC VERSION ${TESSERACT_CXX_VERSION})
 target_code_coverage(
   ${PROJECT_NAME}
@@ -132,6 +133,7 @@ configure_package(NAMESPACE tesseract TARGETS ${PROJECT_NAME})
 
 # Mark cpp header files for installation
 install(FILES include/${PROJECT_NAME}/urdf_parser.h DESTINATION include/${PROJECT_NAME})
+install(FILES include/${PROJECT_NAME}/mesh_writer.h DESTINATION include/${PROJECT_NAME})
 
 # ADD Examples
 add_subdirectory(examples)

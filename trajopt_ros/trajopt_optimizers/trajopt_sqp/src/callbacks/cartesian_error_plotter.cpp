@@ -25,7 +25,6 @@
  */
 #include <trajopt_sqp/callbacks/cartesian_error_plotter.h>
 #include <trajopt_ifopt/utils/trajopt_utils.h>
-#include <trajopt/typedefs.hpp>
 
 #include <tesseract_visualization/markers/arrow_marker.h>
 #include <tesseract_visualization/markers/axis_marker.h>
@@ -37,7 +36,7 @@ CartesianErrorPlottingCallback::CartesianErrorPlottingCallback(tesseract_visuali
 {
 }
 
-void CartesianErrorPlottingCallback::plot(const ifopt::Problem& /*nlp*/)
+void CartesianErrorPlottingCallback::plot(const QPProblem& /*problem*/)
 {
   for (const auto& cnt : cart_position_cnts_)
   {
@@ -62,20 +61,21 @@ void CartesianErrorPlottingCallback::plot(const ifopt::Problem& /*nlp*/)
   }
 }
 
-void CartesianErrorPlottingCallback::addConstraintSet(const trajopt::CartPosConstraint::ConstPtr& cart_position_cnt)
+void CartesianErrorPlottingCallback::addConstraintSet(
+    const trajopt_ifopt::CartPosConstraint::ConstPtr& cart_position_cnt)
 {
   cart_position_cnts_.push_back(cart_position_cnt);
 };
 
 void CartesianErrorPlottingCallback::addConstraintSet(
-    const std::vector<trajopt::CartPosConstraint::ConstPtr>& cart_position_cnts)
+    const std::vector<trajopt_ifopt::CartPosConstraint::ConstPtr>& cart_position_cnts)
 {
   for (const auto& cnt : cart_position_cnts)
     cart_position_cnts_.push_back(cnt);
 }
 
-bool CartesianErrorPlottingCallback::execute(const ifopt::Problem& nlp, const trajopt_sqp::SQPResults&)
+bool CartesianErrorPlottingCallback::execute(const QPProblem& problem, const trajopt_sqp::SQPResults& /*sqp_results*/)
 {
-  plot(nlp);
+  plot(problem);
   return true;
 };

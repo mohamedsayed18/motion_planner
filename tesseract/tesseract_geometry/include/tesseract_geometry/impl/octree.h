@@ -73,7 +73,10 @@ public:
       ot->updateNode(point.x, point.y, point.z, true);
 
     if (prune)
+    {
       tesseract_geometry::Octree::prune(*ot);
+      pruned_ = prune;
+    }
 
     octree_ = ot;
   }
@@ -90,13 +93,15 @@ public:
 #endif  // SWIG
   SubType getSubType() const { return sub_type_; }
 
+  bool getPruned() const { return pruned_; }
+
   Geometry::Ptr clone() const override { return std::make_shared<Octree>(octree_, sub_type_); }
 
   /**
    * @brief Octrees are typically generated from 3D sensor data so this method
    * should be used to efficiently update the collision shape.
    */
-  void update() { assert(false); }
+  void update() { assert(false); }  // NOLINT
 
   /**
    * @brief Calculate the number of sub shapes that would get generated for this octree
@@ -120,6 +125,7 @@ public:
 private:
   std::shared_ptr<const octomap::OcTree> octree_;
   SubType sub_type_;
+  bool pruned_{ false };
 
   static bool isNodeCollapsible(octomap::OcTree& octree, octomap::OcTreeNode* node)
   {
@@ -198,10 +204,10 @@ private:
 public:
 #ifndef SWIG
   /**
-   * @brief A custom octree prune which will prune if all children are above the occupency threshold.
+   * @brief A custom octree prune which will prune if all children are above the occupancy threshold.
    *
    * This is different from the octomap::OcTree::prune which requires all children to have the same
-   * occupency to be collapsed.
+   * occupancy to be collapsed.
    *
    * @param octree The octree to be pruned.
    */

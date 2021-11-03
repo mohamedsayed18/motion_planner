@@ -29,31 +29,32 @@
 using namespace trajopt_sqp;
 
 JointStatePlottingCallback::JointStatePlottingCallback(tesseract_visualization::Visualization::Ptr plotter,
-                                                       tesseract_environment::StateSolver::Ptr state_solver)
+                                                       tesseract_scene_graph::StateSolver::UPtr state_solver)
   : plotter_(std::move(plotter)), state_solver_(std::move(state_solver))
 {
 }
 
-void JointStatePlottingCallback::plot(const ifopt::Problem& /*nlp*/)
+void JointStatePlottingCallback::plot(const QPProblem& /*problem*/)
 {
-  tesseract_common::JointTrajectory trajectory = trajopt::toJointTrajectory(joint_positions_);
+  tesseract_common::JointTrajectory trajectory = trajopt_ifopt::toJointTrajectory(joint_positions_);
 
   if (plotter_)
-    plotter_->plotTrajectory(trajectory, state_solver_);
+    plotter_->plotTrajectory(trajectory, *state_solver_);
 }
 
-void JointStatePlottingCallback::addVariableSet(const trajopt::JointPosition::ConstPtr& joint_position)
+void JointStatePlottingCallback::addVariableSet(const trajopt_ifopt::JointPosition::ConstPtr& joint_position)
 {
   joint_positions_.push_back(joint_position);
 };
 
-void JointStatePlottingCallback::addVariableSet(const std::vector<trajopt::JointPosition::ConstPtr>& joint_positions)
+void JointStatePlottingCallback::addVariableSet(
+    const std::vector<trajopt_ifopt::JointPosition::ConstPtr>& joint_positions)
 {
   for (const auto& cnt : joint_positions)
     joint_positions_.push_back(cnt);
 }
-bool JointStatePlottingCallback::execute(const ifopt::Problem& nlp, const trajopt_sqp::SQPResults& /*sqp_results*/)
+bool JointStatePlottingCallback::execute(const QPProblem& problem, const trajopt_sqp::SQPResults& /*sqp_results*/)
 {
-  plot(nlp);
+  plot(problem);
   return true;
 };

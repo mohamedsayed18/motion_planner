@@ -8,12 +8,15 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include "kinematics_test_utils.h"
 
 #include <tesseract_kinematics/kdl/kdl_fwd_kin_chain.h>
-#include <tesseract_kinematics/core/rep_inverse_kinematics.h>
+#include <tesseract_kinematics/core/rep_inv_kin.h>
 #include <tesseract_kinematics/opw/opw_inv_kin.h>
 #include <tesseract_kinematics/core/utils.h>
+#include <tesseract_kinematics/core/kinematic_group.h>
+#include <tesseract_state_solver/kdl/kdl_state_solver.h>
 #include <opw_kinematics/opw_parameters.h>
 
 using namespace tesseract_kinematics::test_suite;
+using namespace tesseract_kinematics;
 
 inline opw_kinematics::Parameters<double> getOPWKinematicsParamABB()
 {
@@ -31,123 +34,67 @@ inline opw_kinematics::Parameters<double> getOPWKinematicsParamABB()
   return opw_params;
 }
 
-tesseract_kinematics::ForwardKinematics::Ptr
-getRobotFwdKinematics(const tesseract_scene_graph::SceneGraph::Ptr& scene_graph)
+ForwardKinematics::UPtr getRobotFwdKinematics(const tesseract_scene_graph::SceneGraph& scene_graph)
 {
-  auto fwd_kin = std::make_shared<tesseract_kinematics::KDLFwdKinChain>();
-  EXPECT_TRUE(fwd_kin->init(scene_graph, "world", "tool0", "manip"));
-  return fwd_kin;
+  return std::make_unique<KDLFwdKinChain>(scene_graph, "base_link", "tool0");
 }
 
-tesseract_kinematics::ForwardKinematics::Ptr
-getFullFwdKinematics(const tesseract_scene_graph::SceneGraph::Ptr& scene_graph)
+ForwardKinematics::UPtr getFullFwdKinematics(const tesseract_scene_graph::SceneGraph& scene_graph)
 {
-  auto fwd_kin = std::make_shared<tesseract_kinematics::KDLFwdKinChain>();
-  EXPECT_TRUE(fwd_kin->init(scene_graph, "positioner_tool0", "tool0", "robot_external_positioner"));
-  return fwd_kin;
+  return std::make_unique<KDLFwdKinChain>(scene_graph, "positioner_tool0", "tool0");
 }
 
-tesseract_kinematics::ForwardKinematics::Ptr
-getPositionerFwdKinematics(const tesseract_scene_graph::SceneGraph::Ptr& scene_graph)
+ForwardKinematics::UPtr getPositionerFwdKinematics(const tesseract_scene_graph::SceneGraph& scene_graph)
 {
-  auto fwd_kin = std::make_shared<tesseract_kinematics::KDLFwdKinChain>();
-  EXPECT_TRUE(fwd_kin->init(scene_graph, "world", "positioner_tool0", "positioner"));
-  return fwd_kin;
+  return std::make_unique<KDLFwdKinChain>(scene_graph, "positioner_base_link", "positioner_tool0");
 }
 
-tesseract_kinematics::InverseKinematics::Ptr
-getFullInvKinematics(const tesseract_scene_graph::SceneGraph::Ptr& scene_graph, bool common_base = true)
+InverseKinematics::UPtr getFullInvKinematics(const tesseract_scene_graph::SceneGraph& scene_graph)
 {
-  tesseract_common::TransformMap link_map;
-  link_map["world"] = Eigen::Isometry3d::Identity();
-  link_map["positioner_base_link"] = Eigen::Isometry3d::Identity() * Eigen::Translation3d(1, 0, 1);
-
   auto robot_fwd_kin = getRobotFwdKinematics(scene_graph);
+
+  tesseract_scene_graph::KDLStateSolver state_solver(scene_graph);
+  tesseract_scene_graph::SceneState scene_state = state_solver.getState();
+
   opw_kinematics::Parameters<double> opw_params = getOPWKinematicsParamABB();
 
-  auto opw_kin = std::make_shared<tesseract_kinematics::OPWInvKin>();
-  opw_kin->init("robot",
-                opw_params,
-                robot_fwd_kin->getBaseLinkName(),
-                robot_fwd_kin->getTipLinkName(),
-                robot_fwd_kin->getJointNames(),
-                robot_fwd_kin->getLinkNames(),
-                robot_fwd_kin->getActiveLinkNames(),
-                robot_fwd_kin->getLimits());
+  auto opw_kin = std::make_unique<OPWInvKin>(opw_params,
+                                             robot_fwd_kin->getBaseLinkName(),
+                                             robot_fwd_kin->getTipLinkNames()[0],
+                                             robot_fwd_kin->getJointNames());
 
   auto positioner_kin = getPositionerFwdKinematics(scene_graph);
-  Eigen::VectorXd positioner_resolution = Eigen::VectorXd::Constant(1, 1, 0.1);
-  auto rep_inv_kin = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-  EXPECT_FALSE(rep_inv_kin->checkInitialized());
-  if (common_base)
-  {
-    rep_inv_kin->init(scene_graph, opw_kin, 2.5, positioner_kin, positioner_resolution, "robot_external_positioner");
-  }
-  else
-  {
-    auto positioner_kin_secondary = std::make_shared<tesseract_kinematics::KDLFwdKinChain>();
-    positioner_kin_secondary->init(scene_graph, "positioner_base_link", "positioner_tool0", "positioner");
-    rep_inv_kin->init(scene_graph,
-                      opw_kin,
-                      2.5,
-                      positioner_kin_secondary,
-                      positioner_resolution,
-                      link_map,
-                      "robot_external_positioner");
-  }
-  EXPECT_TRUE(rep_inv_kin->getSceneGraph() == scene_graph);
-  EXPECT_TRUE(rep_inv_kin->checkInitialized());
+  Eigen::VectorXd positioner_resolution = Eigen::VectorXd::Constant(2, 1, 0.1);
+  auto rep_inv_kin = std::make_unique<REPInvKin>(
+      scene_graph, scene_state, opw_kin->clone(), 2.5, positioner_kin->clone(), positioner_resolution);
 
   {  // Test failure
     auto scene_graph_empty = std::make_shared<tesseract_scene_graph::SceneGraph>();
-    auto rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph_empty, opw_kin, 2.5, positioner_kin, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
+    // NOLINTNEXTLINE
+    EXPECT_ANY_THROW(std::make_shared<REPInvKin>(
+        *scene_graph_empty, scene_state, opw_kin->clone(), 2.5, positioner_kin->clone(), positioner_resolution));
 
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(
-        rep_inv_kin_failure->init(nullptr, opw_kin, 2.5, positioner_kin, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
+    // NOLINTNEXTLINE
+    EXPECT_ANY_THROW(std::make_shared<REPInvKin>(
+        scene_graph, scene_state, nullptr, 2.5, positioner_kin->clone(), positioner_resolution));
 
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, nullptr, 2.5, positioner_kin, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, nullptr, 2.5, positioner_kin, positioner_resolution, link_map, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
+    // NOLINTNEXTLINE
+    EXPECT_ANY_THROW(std::make_shared<REPInvKin>(
+        scene_graph, scene_state, opw_kin->clone(), -2.5, positioner_kin->clone(), positioner_resolution));
 
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, opw_kin, -2.5, positioner_kin, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
-
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(
-        rep_inv_kin_failure->init(scene_graph, opw_kin, 2.5, nullptr, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, opw_kin, 2.5, nullptr, positioner_resolution, link_map, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
-
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    auto positioner_kin_failure = std::make_shared<tesseract_kinematics::KDLFwdKinChain>();
-    positioner_kin_failure->init(scene_graph, "positioner_base_link", "positioner_tool0", "positioner");
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, opw_kin, 2.5, positioner_kin_failure, positioner_resolution, "robot_on_positioner"));
+    // NOLINTNEXTLINE
+    EXPECT_ANY_THROW(
+        std::make_shared<REPInvKin>(scene_graph, scene_state, opw_kin->clone(), 2.5, nullptr, positioner_resolution));
 
     positioner_resolution = Eigen::VectorXd();
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, opw_kin, 2.5, positioner_kin, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
+    // NOLINTNEXTLINE
+    EXPECT_ANY_THROW(std::make_shared<REPInvKin>(
+        scene_graph, scene_state, opw_kin->clone(), 2.5, positioner_kin->clone(), positioner_resolution));
 
-    positioner_resolution = Eigen::VectorXd::Constant(1, -0.1);
-    rep_inv_kin_failure = std::make_shared<tesseract_kinematics::RobotWithExternalPositionerInvKin>();
-    EXPECT_FALSE(rep_inv_kin_failure->init(
-        scene_graph, opw_kin, 2.5, positioner_kin, positioner_resolution, "robot_on_positioner"));
-    EXPECT_FALSE(rep_inv_kin_failure->checkInitialized());
+    positioner_resolution = Eigen::VectorXd::Constant(2, -0.1);
+    // NOLINTNEXTLINE
+    EXPECT_ANY_THROW(std::make_shared<REPInvKin>(
+        scene_graph, scene_state, opw_kin->clone(), 2.5, positioner_kin->clone(), positioner_resolution));
   }
 
   return rep_inv_kin;
@@ -155,21 +102,28 @@ getFullInvKinematics(const tesseract_scene_graph::SceneGraph::Ptr& scene_graph, 
 
 TEST(TesseractKinematicsUnit, RobotWithExternalPositionerInverseKinematicUnit)  // NOLINT
 {
-  tesseract_scene_graph::SceneGraph::Ptr scene_graph = getSceneGraphABBExternalPositioner();
+  auto scene_graph = getSceneGraphABBExternalPositioner();
 
-  auto fwd_kin = getFullFwdKinematics(scene_graph);
-  auto inv_kin = getFullInvKinematics(scene_graph);
-  auto inv_kin2 = getFullInvKinematics(scene_graph, false);
+  tesseract_scene_graph::KDLStateSolver state_solver(*scene_graph);
+  tesseract_scene_graph::SceneState scene_state = state_solver.getState();
 
-  inv_kin->synchronize(fwd_kin);
-  inv_kin2->synchronize(fwd_kin);
+  std::string manip_name = "robot_external_positioner";
+  std::string base_link_name = "base_link";
+  std::string working_frame = "positioner_tool0";
+  std::string tip_link_name = "tool0";
+  std::vector<std::string> joint_names{
+    "positioner_joint_1", "positioner_joint_2", "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6"
+  };
+  tesseract_common::KinematicLimits target_limits = getTargetLimits(*scene_graph, joint_names);
 
-  const std::vector<std::string>& fwd_joint_names = fwd_kin->getJointNames();
-  const std::vector<std::string>& inv_joint_names = inv_kin->getJointNames();
-  const std::vector<std::string>& inv2_joint_names = inv_kin2->getJointNames();
+  auto fwd_kin = getFullFwdKinematics(*scene_graph);
+  auto inv_kin = getFullInvKinematics(*scene_graph);
+  auto inv_kin2 = inv_kin->clone();
 
-  EXPECT_TRUE(std::equal(fwd_joint_names.begin(), fwd_joint_names.end(), inv_joint_names.begin()));
-  EXPECT_TRUE(std::equal(fwd_joint_names.begin(), fwd_joint_names.end(), inv2_joint_names.begin()));
+  std::vector<std::string> fwd_joint_names = fwd_kin->getJointNames();
+  std::vector<std::string> inv_joint_names = inv_kin->getJointNames();
+
+  EXPECT_TRUE(tesseract_common::isIdentical(fwd_joint_names, inv_joint_names, false));
 
   Eigen::Isometry3d pose;
   pose.setIdentity();
@@ -180,57 +134,61 @@ TEST(TesseractKinematicsUnit, RobotWithExternalPositionerInverseKinematicUnit)  
   Eigen::VectorXd seed = Eigen::VectorXd::Zero(fwd_kin->numJoints());
 
   EXPECT_TRUE(inv_kin != nullptr);
-  EXPECT_EQ(inv_kin->getName(), "robot_external_positioner");
-  EXPECT_EQ(inv_kin->getSolverName(), "RobotWithExternalPositionerInvKin");
-  EXPECT_EQ(inv_kin->numJoints(), 7);
-  EXPECT_EQ(inv_kin->getBaseLinkName(), "positioner_tool0");
-  EXPECT_EQ(inv_kin->getTipLinkName(), "tool0");
-  tesseract_common::KinematicLimits target_limits = getTargetLimits(scene_graph, inv_kin->getJointNames());
+  EXPECT_EQ(inv_kin->getSolverName(), DEFAULT_REP_INV_KIN_SOLVER_NAME);
+  EXPECT_EQ(inv_kin->numJoints(), 8);
+  EXPECT_EQ(inv_kin->getBaseLinkName(), base_link_name);
+  EXPECT_EQ(inv_kin->getWorkingFrame(), working_frame);
+  EXPECT_EQ(inv_kin->getTipLinkNames().size(), 1);
+  EXPECT_EQ(inv_kin->getTipLinkNames()[0], tip_link_name);
+  EXPECT_EQ(inv_kin->getJointNames(), joint_names);
 
-  runInvKinTest(*inv_kin, *fwd_kin, pose, seed);
-  runActiveLinkNamesABBExternalPositionerTest(*inv_kin);
-  runKinJointLimitsTest(inv_kin->getLimits(), target_limits);
+  KinematicGroup kin_group(manip_name, joint_names, std::move(inv_kin), *scene_graph, scene_state);
+  KinematicGroup kin_group_copy(kin_group);
 
-  // Inverse Kinematics using different init function
-  EXPECT_TRUE(inv_kin2 != nullptr);
-  EXPECT_EQ(inv_kin2->getName(), "robot_external_positioner");
-  EXPECT_EQ(inv_kin2->getSolverName(), "RobotWithExternalPositionerInvKin");
-  EXPECT_EQ(inv_kin2->numJoints(), 7);
-  EXPECT_EQ(inv_kin2->getBaseLinkName(), "positioner_tool0");
-  EXPECT_EQ(inv_kin2->getTipLinkName(), "tool0");
+  EXPECT_EQ(kin_group.getBaseLinkName(), scene_graph->getRoot());
+  runInvKinTest(kin_group, pose, working_frame, tip_link_name, seed);
+  runKinGroupJacobianABBExternalPositionerTest(kin_group);
+  runActiveLinkNamesABBExternalPositionerTest(kin_group);
+  runKinJointLimitsTest(kin_group.getLimits(), target_limits);
+  runKinSetJointLimitsTest(kin_group);
+  EXPECT_EQ(kin_group.getName(), manip_name);
+  EXPECT_EQ(kin_group.getJointNames(), joint_names);
+  EXPECT_EQ(kin_group.getAllPossibleTipLinkNames().size(), 1);
+  EXPECT_EQ(kin_group.getAllPossibleTipLinkNames()[0], tip_link_name);
+  EXPECT_EQ(kin_group.getAllValidWorkingFrames().size(), 1);
+  EXPECT_EQ(kin_group.getAllValidWorkingFrames()[0], working_frame);
 
-  runInvKinTest(*inv_kin2, *fwd_kin, pose, seed);
-  runActiveLinkNamesABBExternalPositionerTest(*inv_kin2);
-  runKinJointLimitsTest(inv_kin2->getLimits(), target_limits);
+  // Check KinematicGroup copy
+  EXPECT_EQ(kin_group_copy.getBaseLinkName(), scene_graph->getRoot());
+  runInvKinTest(kin_group_copy, pose, working_frame, tip_link_name, seed);
+  runKinGroupJacobianABBExternalPositionerTest(kin_group_copy);
+  runActiveLinkNamesABBExternalPositionerTest(kin_group_copy);
+  runKinJointLimitsTest(kin_group_copy.getLimits(), target_limits);
+  runKinSetJointLimitsTest(kin_group_copy);
+  EXPECT_EQ(kin_group_copy.getName(), manip_name);
+  EXPECT_EQ(kin_group_copy.getJointNames(), joint_names);
+  EXPECT_EQ(kin_group_copy.getAllPossibleTipLinkNames().size(), 1);
+  EXPECT_EQ(kin_group_copy.getAllPossibleTipLinkNames()[0], tip_link_name);
+  EXPECT_EQ(kin_group_copy.getAllValidWorkingFrames().size(), 1);
+  EXPECT_EQ(kin_group_copy.getAllValidWorkingFrames()[0], working_frame);
 
   // Check cloned
-  tesseract_kinematics::InverseKinematics::Ptr inv_kin3 = inv_kin->clone();
-  EXPECT_TRUE(inv_kin3 != nullptr);
-  EXPECT_EQ(inv_kin3->getName(), "robot_external_positioner");
-  EXPECT_EQ(inv_kin3->getSolverName(), "RobotWithExternalPositionerInvKin");
-  EXPECT_EQ(inv_kin3->numJoints(), 7);
-  EXPECT_EQ(inv_kin3->getBaseLinkName(), "positioner_tool0");
-  EXPECT_EQ(inv_kin3->getTipLinkName(), "tool0");
+  EXPECT_TRUE(inv_kin2 != nullptr);
+  EXPECT_EQ(inv_kin2->getSolverName(), DEFAULT_REP_INV_KIN_SOLVER_NAME);
+  EXPECT_EQ(inv_kin2->numJoints(), 8);
+  EXPECT_EQ(inv_kin2->getBaseLinkName(), base_link_name);
+  EXPECT_EQ(inv_kin2->getWorkingFrame(), working_frame);
+  EXPECT_EQ(inv_kin2->getTipLinkNames().size(), 1);
+  EXPECT_EQ(inv_kin2->getTipLinkNames()[0], tip_link_name);
+  EXPECT_EQ(inv_kin2->getJointNames(), joint_names);
 
-  runInvKinTest(*inv_kin3, *fwd_kin, pose, seed);
-  runActiveLinkNamesABBExternalPositionerTest(*inv_kin3);
-  runKinJointLimitsTest(inv_kin3->getLimits(), target_limits);
-
-  // Check update
-  inv_kin3->update();
-  EXPECT_TRUE(inv_kin3 != nullptr);
-  EXPECT_EQ(inv_kin3->getName(), "robot_external_positioner");
-  EXPECT_EQ(inv_kin3->getSolverName(), "RobotWithExternalPositionerInvKin");
-  EXPECT_EQ(inv_kin3->numJoints(), 7);
-  EXPECT_EQ(inv_kin3->getBaseLinkName(), "positioner_tool0");
-  EXPECT_EQ(inv_kin3->getTipLinkName(), "tool0");
-
-  runInvKinTest(*inv_kin3, *fwd_kin, pose, seed);
-  runActiveLinkNamesABBExternalPositionerTest(*inv_kin3);
-  runKinJointLimitsTest(inv_kin3->getLimits(), target_limits);
-
-  // Test setJointLimits
-  runKinSetJointLimitsTest(*inv_kin);
+  KinematicGroup kin_group2(manip_name, joint_names, std::move(inv_kin2), *scene_graph, scene_state);
+  EXPECT_EQ(kin_group2.getBaseLinkName(), scene_graph->getRoot());
+  runInvKinTest(kin_group2, pose, working_frame, tip_link_name, seed);
+  runKinGroupJacobianABBExternalPositionerTest(kin_group2);
+  runActiveLinkNamesABBExternalPositionerTest(kin_group2);
+  runKinJointLimitsTest(kin_group2.getLimits(), target_limits);
+  runKinSetJointLimitsTest(kin_group2);
 }
 
 int main(int argc, char** argv)

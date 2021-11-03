@@ -4,10 +4,11 @@ TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <unordered_map>
 TRAJOPT_IGNORE_WARNINGS_POP
 
-#include <tesseract_environment/core/environment.h>
+#include <tesseract_environment/environment.h>
 #include <trajopt/common.hpp>
 #include <trajopt/json_marshal.hpp>
 #include <trajopt_sco/optimizers.hpp>
+#include <trajopt_utils/utils.hpp>
 
 namespace sco
 {
@@ -54,16 +55,16 @@ public:
   VarArray& GetVars() { return m_traj_vars; }
   /** @brief Returns the number of steps in the problem. This is the number of rows in the optimization matrix.*/
   int GetNumSteps() { return m_traj_vars.rows(); }
-  /** @brief Returns the problem DOF. This is the number of columns in the optization matrix.
+  /** @brief Returns the problem DOF. This is the number of columns in the optimization matrix.
    * Note that this is not necessarily the same as the kinematic DOF.*/
   int GetNumDOF() { return m_traj_vars.cols(); }
-  tesseract_kinematics::ForwardKinematics::ConstPtr GetKin() { return m_kin; }
+  tesseract_kinematics::JointGroup::ConstPtr GetKin() { return m_kin; }
   tesseract_environment::Environment::ConstPtr GetEnv() { return m_env; }
   void SetInitTraj(const TrajArray& x) { m_init_traj = x; }
   TrajArray GetInitTraj() { return m_init_traj; }
   friend TrajOptProb::Ptr ConstructProblem(const ProblemConstructionInfo&);
   /** @brief Returns TrajOptProb.has_time */
-  bool GetHasTime() { return has_time; }
+  bool GetHasTime() const { return has_time; }
   /** @brief Sets TrajOptProb.has_time  */
   void SetHasTime(bool tmp) { has_time = tmp; }
 
@@ -71,7 +72,7 @@ private:
   /** @brief If true, the last column in the optimization matrix will be 1/dt */
   bool has_time;
   VarArray m_traj_vars;
-  tesseract_kinematics::ForwardKinematics::ConstPtr m_kin;
+  tesseract_kinematics::JointGroup::ConstPtr m_kin;
   tesseract_environment::Environment::ConstPtr m_env;
   TrajArray m_init_traj;
 };
@@ -93,7 +94,7 @@ struct TrajOptResult
 struct BasicInfo
 {
   /** @brief Number of time steps (rows) in the optimization matrix */
-  int n_steps;
+  int n_steps{ -1 };
 
   /** @brief The manipulator name */
   std::string manip;
@@ -144,11 +145,11 @@ struct InitInfo
     GIVEN_TRAJ,
   };
   /** @brief Specifies the type of initialization to use */
-  Type type;
+  Type type{ STATIONARY };
   /** @brief Data used during initialization. Use depends on the initialization selected. */
   TrajArray data;
   /** @brief Default value the final column of the optimization is initialized too if time is being used */
-  double dt = 1.0;
+  double dt{ 1.0 };
 };
 
 struct MakesCost
@@ -168,8 +169,8 @@ struct TermInfo
   using Ptr = std::shared_ptr<TermInfo>;
 
   std::string name;
-  int term_type;
-  int getSupportedTypes() { return supported_term_types_; }
+  int term_type{ -1 };
+  int getSupportedTypes() const { return supported_term_types_; }
   virtual void fromJson(ProblemConstructionInfo& pci, const Json::Value& v) = 0;
   virtual void hatch(TrajOptProb& prob) = 0;
 
@@ -209,14 +210,9 @@ public:
   InitInfo init_info;
 
   tesseract_environment::Environment::ConstPtr env;
-  tesseract_kinematics::ForwardKinematics::ConstPtr kin;
+  tesseract_kinematics::JointGroup::ConstPtr kin;
 
   ProblemConstructionInfo(tesseract_environment::Environment::ConstPtr env) : env(std::move(env)) {}
-
-  tesseract_kinematics::ForwardKinematics::ConstPtr getManipulator(const std::string& name) const
-  {
-    return env->getManipulatorManager()->getFwdKinematicSolver(name);
-  }
 
   void fromJson(const Json::Value& v);
 
@@ -248,7 +244,7 @@ struct UserDefinedTermInfo : public TermInfo
   std::string name = "UserDefined";
 
   /** @brief Timesteps over which to apply term */
-  int first_step, last_step;
+  int first_step{ -1 }, last_step{ -1 };
 
   /** @brief Indicated if a step is fixed and its variables cannot be changed */
   std::vector<int> fixed_steps;
@@ -285,16 +281,16 @@ struct DynamicCartPoseTermInfo : public TermInfo
 
   /** @brief Timestep at which to apply term */
   int timestep;
-  /** @brief The link relative to which the target_tcp is defined */
-  std::string target;
   /** @brief Coefficients for position and rotation */
   Eigen::Vector3d pos_coeffs, rot_coeffs;
   /** @brief Link which should reach desired pos */
-  std::string link;
+  std::string source_frame;
+  /** @brief The link relative to which the target_tcp is defined */
+  std::string target_frame;
   /** @brief Static transform applied to the link_ location */
-  Eigen::Isometry3d tcp;
-  /** @brief A Static tranform to be applied to target_ location */
-  Eigen::Isometry3d target_tcp;
+  Eigen::Isometry3d source_frame_offset;
+  /** @brief A Static transform to be applied to target_ location */
+  Eigen::Isometry3d target_frame_offset;
 
   DynamicCartPoseTermInfo();
 
@@ -315,19 +311,16 @@ struct CartPoseTermInfo : public TermInfo
 
   /** @brief Timestep at which to apply term */
   int timestep;
-  /** @brief  Cartesian position */
-  Eigen::Vector3d xyz;
-  /** @brief Rotation quaternion */
-  Eigen::Vector4d wxyz;
-  /** @brief coefficients for position and rotation */
   Eigen::Vector3d pos_coeffs, rot_coeffs;
-  /** @brief Link which should reach desired pose */
-  std::string link;
-  /** @brief Static transform applied to the link */
-  Eigen::Isometry3d tcp;
-  /** @brief The frame relative to which the target position is defined. If empty, frame is assumed to the root,
-   * "world", frame */
-  std::string target;
+
+  /** @brief Link which should reach desired pos */
+  std::string source_frame;
+  /** @brief The link relative to which the target_tcp is defined */
+  std::string target_frame;
+  /** @brief Static transform applied to the link_ location */
+  Eigen::Isometry3d source_frame_offset;
+  /** @brief A Static transform to be applied to target_ location */
+  Eigen::Isometry3d target_frame_offset;
 
   CartPoseTermInfo();
 
@@ -347,10 +340,10 @@ struct CartPoseTermInfo : public TermInfo
 struct CartVelTermInfo : public TermInfo
 {
   /** @brief Timesteps over which to apply term */
-  int first_step, last_step;
+  int first_step{ -1 }, last_step{ -1 };
   /** @brief Link to which the term is applied */
   std::string link;
-  double max_displacement;
+  double max_displacement{ 0 };
   /** @brief Used to add term to pci from json */
   void fromJson(ProblemConstructionInfo& pci, const Json::Value& v) override;
   /** @brief Converts term info into cost/constraint and adds it to trajopt problem */
@@ -557,16 +550,16 @@ links. Currently self-collisions are not included.
 struct CollisionTermInfo : public TermInfo
 {
   /** @brief first_step and last_step are inclusive */
-  int first_step, last_step;
+  int first_step{ -1 }, last_step{ -1 };
 
   /** @brief Indicate the type of collision checking that should be used. */
-  CollisionEvaluatorType evaluator_type;
+  CollisionEvaluatorType evaluator_type{ CollisionEvaluatorType::SINGLE_TIMESTEP };
 
   /**
    * @brief Use the weighted sum for each link pair. This reduces the number equations added to the problem
    * When enable it is good to start with a coefficient of 1 otherwise 20 is a good starting point.
    */
-  bool use_weighted_sum = false;
+  bool use_weighted_sum{ false };
 
   /** @brief Indicated if a step is fixed and its variables cannot be changed */
   std::vector<int> fixed_steps;
@@ -577,20 +570,20 @@ struct CollisionTermInfo : public TermInfo
    * Note: This gets converted to longest_valid_segment_fraction.
    *       longest_valid_segment_fraction = longest_valid_segment_length / state_space.getMaximumExtent()
    */
-  double longest_valid_segment_length = 0.5;
+  double longest_valid_segment_length{ 0.5 };
 
   /** @brief A buffer added to the collision margin distance. Contact results that are within the safety margin buffer
   distance but greater than the safety margin distance (i.e. close but not in collision) will be evaluated but will not
   contribute costs to the optimization problem. This helps keep the solution away from collision constraint conditions
   when the safety margin distance is small.*/
-  double safety_margin_buffer = 0.05;
+  double safety_margin_buffer{ 0.05 };
 
   /** @brief Set the contact test type that should be used. */
   tesseract_collision::ContactTestType contact_test_type = tesseract_collision::ContactTestType::ALL;
 
   /** @brief Contains distance penalization data: Safety Margin, Coeff used during */
   /** @brief optimization, etc. */
-  std::vector<SafetyMarginData::Ptr> info;
+  std::vector<util::SafetyMarginData::Ptr> info;
 
   /** @brief Used to add term to pci from json */
   void fromJson(ProblemConstructionInfo& pci, const Json::Value& v) override;
@@ -629,21 +622,21 @@ TrajOptResult::Ptr OptimizeProblem(const TrajOptProb::Ptr&,
 struct AvoidSingularityTermInfo : public TermInfo
 {
   /** @brief The forward kinematics solver used to calculate the jacobian for which to do singularity avoidance */
-  tesseract_kinematics::ForwardKinematics::ConstPtr subset_kin_;
+  tesseract_kinematics::JointGroup::ConstPtr subset_kin_;
   /** @brief Damping factor used to prevent numerical instability in the singularity avoidance cost as the smallest
    * singular value approaches zero */
-  double lambda;
+  double lambda{ 0.1 };
   /** @brief The robot link with which to calculate the robot jacobian (required because of kinematic trees) */
   std::string link;
-  int first_step;
-  int last_step;
+  int first_step{ -1 };
+  int last_step{ -1 };
   DblVec coeffs;
 
   void hatch(TrajOptProb& prob) override;
   void fromJson(ProblemConstructionInfo& pci, const Json::Value& v) override;
   DEFINE_CREATE(AvoidSingularityTermInfo)
 
-  AvoidSingularityTermInfo(tesseract_kinematics::ForwardKinematics::ConstPtr subset_kin = nullptr, double lambda_ = 0.1)
+  AvoidSingularityTermInfo(tesseract_kinematics::JointGroup::ConstPtr subset_kin = nullptr, double lambda_ = 0.1)
     : TermInfo(TT_COST | TT_CNT), subset_kin_(std::move(subset_kin)), lambda(lambda_)
   {
   }

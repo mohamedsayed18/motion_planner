@@ -38,9 +38,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_common/serialization.h>
 
-namespace boost
-{
-namespace serialization
+namespace boost::serialization
 {
 /*****************************/
 /****** Eigen::VectorXd ******/
@@ -56,7 +54,7 @@ void save(Archive& ar, const Eigen::VectorXd& g, const unsigned int /*version*/)
 template <class Archive>
 void load(Archive& ar, Eigen::VectorXd& g, const unsigned int /*version*/)
 {
-  long rows;
+  long rows{ 0 };
   ar& BOOST_SERIALIZATION_NVP(rows);
   g.resize(rows);
   ar& boost::serialization::make_nvp("data", boost::serialization::make_array(g.data(), rows));
@@ -111,7 +109,7 @@ void save(Archive& ar, const Eigen::MatrixX2d& g, const unsigned int /*version*/
 template <class Archive>
 void load(Archive& ar, Eigen::MatrixX2d& g, const unsigned int /*version*/)
 {
-  long rows;
+  long rows{ 0 };
   ar& BOOST_SERIALIZATION_NVP(rows);
   g.resize(rows, 2);
   ar& boost::serialization::make_nvp("data", boost::serialization::make_array(g.data(), rows * 2));
@@ -123,8 +121,49 @@ void serialize(Archive& ar, Eigen::MatrixX2d& g, const unsigned int version)
   split_free(ar, g, version);
 }
 
-}  // namespace serialization
-}  // namespace boost
+template <class Archive>
+void save(Archive& ar, const std::variant<std::string, Eigen::Isometry3d>& g, const unsigned int /*version*/)
+{
+  std::size_t index = g.index();
+  ar& BOOST_SERIALIZATION_NVP(index);
+  if (index == 0)  // std::string
+  {
+    const auto& tcp_string = std::get<std::string>(g);
+    ar& BOOST_SERIALIZATION_NVP(tcp_string);
+  }
+  else  // Eigen::Isometry3d
+  {
+    const auto& tcp_isometry = std::get<Eigen::Isometry3d>(g);
+    ar& BOOST_SERIALIZATION_NVP(tcp_isometry);
+  }
+}
+
+template <class Archive>
+void load(Archive& ar, std::variant<std::string, Eigen::Isometry3d>& g, const unsigned int /*version*/)
+{
+  std::size_t index{ 0 };
+  ar& BOOST_SERIALIZATION_NVP(index);
+  if (index == 0)  // std::string
+  {
+    std::string tcp_string;
+    ar& BOOST_SERIALIZATION_NVP(tcp_string);
+    g = tcp_string;
+  }
+  else  // Eigen::Isometry3d
+  {
+    Eigen::Isometry3d tcp_isometry{ Eigen::Isometry3d::Identity() };
+    ar& BOOST_SERIALIZATION_NVP(tcp_isometry);
+    g = tcp_isometry;
+  }
+}
+
+template <class Archive>
+void serialize(Archive& ar, std::variant<std::string, Eigen::Isometry3d>& g, const unsigned int version)
+{
+  split_free(ar, g, version);
+}
+
+}  // namespace boost::serialization
 
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
@@ -166,4 +205,17 @@ template void boost::serialization::serialize(boost::archive::xml_oarchive& ar,
                                               const unsigned int version);
 template void boost::serialization::serialize(boost::archive::xml_iarchive& ar,
                                               Eigen::MatrixX2d& g,
+                                              const unsigned int version);
+
+template void boost::serialization::save(boost::archive::xml_oarchive&,
+                                         const std::variant<std::string, Eigen::Isometry3d>& g,
+                                         const unsigned int version);
+template void boost::serialization::load(boost::archive::xml_iarchive& ar,
+                                         std::variant<std::string, Eigen::Isometry3d>& g,
+                                         const unsigned int version);
+template void boost::serialization::serialize(boost::archive::xml_oarchive& ar,
+                                              std::variant<std::string, Eigen::Isometry3d>& g,
+                                              const unsigned int version);
+template void boost::serialization::serialize(boost::archive::xml_iarchive& ar,
+                                              std::variant<std::string, Eigen::Isometry3d>& g,
                                               const unsigned int version);

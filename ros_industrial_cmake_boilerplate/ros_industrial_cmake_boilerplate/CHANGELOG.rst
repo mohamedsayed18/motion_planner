@@ -2,6 +2,12 @@
 Changelog for package ros_industrial_cmake_boilerplate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.2.12 (2021-10-13)
+-------------------
+* Add colcon support
+* Improve configure_package
+* Contributors: Levi-Armstrong
+
 0.2.11 (2021-07-02)
 -------------------
 * Rename clang-tidy keyword ERRORS_CHECKS to ERROR_CHECKS

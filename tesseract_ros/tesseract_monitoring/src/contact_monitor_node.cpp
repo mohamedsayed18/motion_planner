@@ -32,8 +32,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <boost/thread/thread.hpp>
 
-#include <tesseract_environment/core/environment.h>
-#include <tesseract_environment/ofkt/ofkt_state_solver.h>
+#include <tesseract_environment/environment.h>
 #include <tesseract_scene_graph/graph.h>
 #include <tesseract_scene_graph/utils.h>
 #include <tesseract_srdf/srdf_model.h>
@@ -89,9 +88,9 @@ int main(int argc, char** argv)
   nh.getParam(robot_description, urdf_xml_string);
   nh.getParam(robot_description + "_semantic", srdf_xml_string);
 
-  auto env = std::make_shared<tesseract_environment::Environment>();
-  tesseract_scene_graph::ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-  if (!env->init<tesseract_environment::OFKTStateSolver>(urdf_xml_string, srdf_xml_string, locator))
+  auto env = std::make_unique<tesseract_environment::Environment>();
+  auto locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+  if (!env->init(urdf_xml_string, srdf_xml_string, locator))
   {
     ROS_ERROR("Failed to initialize environment.");
     return -1;
@@ -120,7 +119,7 @@ int main(int argc, char** argv)
   tesseract_collision::ContactTestType type = static_cast<tesseract_collision::ContactTestType>(contact_test_type);
 
   tesseract_monitoring::ContactMonitor cm(
-      monitor_namespace, env, nh, pnh, monitored_link_names, type, contact_distance, joint_state_topic);
+      monitor_namespace, std::move(env), nh, pnh, monitored_link_names, type, contact_distance, joint_state_topic);
 
   if (publish_environment)
     cm.startPublishingEnvironment();

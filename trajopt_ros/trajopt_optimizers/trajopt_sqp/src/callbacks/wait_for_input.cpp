@@ -25,7 +25,6 @@
  */
 #include <trajopt_sqp/callbacks/wait_for_input.h>
 #include <trajopt_ifopt/utils/trajopt_utils.h>
-#include <trajopt/typedefs.hpp>
 
 using namespace trajopt_sqp;
 
@@ -34,7 +33,7 @@ WaitForInputCallback::WaitForInputCallback(tesseract_visualization::Visualizatio
 {
 }
 
-bool WaitForInputCallback::execute(const ifopt::Problem& /*nlp*/, const trajopt_sqp::SQPResults&)
+bool WaitForInputCallback::execute(const QPProblem& /*problem*/, const trajopt_sqp::SQPResults&)
 {
   plotter_->waitForInput();
   return true;

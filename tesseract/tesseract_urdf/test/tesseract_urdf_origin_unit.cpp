@@ -14,13 +14,11 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
  */
 Eigen::Quaterniond fromRPY(double roll, double pitch, double yaw)
 {
-  double phi, the, psi;
+  double phi = roll / 2.0;
+  double the = pitch / 2.0;
+  double psi = yaw / 2.0;
 
-  phi = roll / 2.0;
-  the = pitch / 2.0;
-  psi = yaw / 2.0;
-
-  double x, y, z, w;
+  double x{ 0 }, y{ 0 }, z{ 0 }, w{ 0 };
   x = std::sin(phi) * std::cos(the) * std::cos(psi) - std::cos(phi) * std::sin(the) * std::sin(psi);
   y = std::cos(phi) * std::sin(the) * std::cos(psi) + std::sin(phi) * std::cos(the) * std::sin(psi);
   z = std::cos(phi) * std::cos(the) * std::sin(psi) - std::sin(phi) * std::sin(the) * std::cos(psi);
@@ -123,5 +121,15 @@ TEST(TesseractURDFUnit, parse_origin)  // NOLINT
     std::string str = R"(<origin />)";
     Eigen::Isometry3d origin;
     EXPECT_FALSE(runTest<Eigen::Isometry3d>(origin, &tesseract_urdf::parseOrigin, str, "origin", 2));
+  }
+}
+
+TEST(TesseractURDFUnit, write_origin)  // NOLINT
+{
+  {
+    Eigen::Isometry3d origin = Eigen::Isometry3d::Identity();
+    std::string text;
+    EXPECT_EQ(0, writeTest<Eigen::Isometry3d>(origin, &tesseract_urdf::writeOrigin, text));
+    EXPECT_NE(text, "");
   }
 }

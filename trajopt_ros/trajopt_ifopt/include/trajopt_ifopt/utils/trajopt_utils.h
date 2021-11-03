@@ -28,48 +28,28 @@
 
 #include <trajopt_utils/macros.h>
 TRAJOPT_IGNORE_WARNINGS_PUSH
-#include <Eigen/Eigen>
-#include <ifopt/cost_term.h>
 #include <tesseract_common/types.h>
+#include <tesseract_common/joint_state.h>
+#include <Eigen/Core>
 TRAJOPT_IGNORE_WARNINGS_POP
-#include <trajopt/typedefs.hpp>
 #include <trajopt_ifopt/variable_sets/joint_position_variable.h>
 
-namespace trajopt
+namespace trajopt_ifopt
 {
 /**
  * @brief Converts a vector of trajopt variables into the legacy TrajArray format
  * @param joint_positions Vector of joint positions. Must be in order and all the same length
  * @return TrajArray - size = [joint_positions.size(), joint_positions.n_dof]
  */
-inline trajopt::TrajArray toTrajArray(const std::vector<trajopt::JointPosition::ConstPtr>& joint_positions)
-{
-  trajopt::TrajArray traj_array;
-  if (!joint_positions.empty())
-    traj_array.resize(static_cast<Eigen::Index>(joint_positions.size()), joint_positions.front()->GetRows());
-  for (Eigen::Index i = 0; i < traj_array.rows(); i++)
-    traj_array.row(i) = joint_positions[static_cast<std::size_t>(i)]->GetValues().transpose();
-  return traj_array;
-}
+tesseract_common::TrajArray toTrajArray(const std::vector<trajopt_ifopt::JointPosition::ConstPtr>& joint_positions);
 
 /**
  * @brief Converts a vector of trajopt variables into tesseract_common JointTrajectory
  * @param joint_positions Vector of joint positions. Must be in order and all the same length
  * @return JointTrajectory
  */
-inline tesseract_common::JointTrajectory
-toJointTrajectory(const std::vector<trajopt::JointPosition::ConstPtr>& joint_positions)
-{
-  tesseract_common::JointTrajectory joint_trajectory;
+tesseract_common::JointTrajectory
+toJointTrajectory(const std::vector<trajopt_ifopt::JointPosition::ConstPtr>& joint_positions);
 
-  if (!joint_positions.empty())
-    joint_trajectory.reserve(joint_positions.size());
-
-  for (const auto& jp : joint_positions)
-    joint_trajectory.emplace_back(jp->GetJointNames(), jp->GetValues());
-
-  return joint_trajectory;
-}
-
-}  // namespace trajopt
+}  // namespace trajopt_ifopt
 #endif

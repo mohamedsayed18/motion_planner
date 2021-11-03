@@ -35,6 +35,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <map>
 #include <unordered_map>
 #include <boost/filesystem.hpp>
+#include <yaml-cpp/yaml.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_common/kinematic_limits.h>
@@ -67,25 +68,98 @@ using Toolpath = AlignedVector<VectorIsometry3d>;
 using TrajArray = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 
 using LinkNamesPair = std::pair<std::string, std::string>;
+
 struct PairHash
 {
-  std::size_t operator()(const LinkNamesPair& pair) const { return std::hash<std::string>()(pair.first + pair.second); }
+  std::size_t operator()(const LinkNamesPair& pair) const;
 };
+
 /**
  * @brief Create a pair of strings, where the pair.first is always <= pair.second.
  *
  * This is commonly used along with PairHash as the key to an unordered_map<LinkNamesPair, Type, PairHash>
  * @param link_name1 First link name
- * @param link_name2 Second link anme
+ * @param link_name2 Second link name
  * @return LinkNamesPair a lexicographically sorted pair of strings
  */
-static inline LinkNamesPair makeOrderedLinkPair(const std::string& link_name1, const std::string& link_name2)
+LinkNamesPair makeOrderedLinkPair(const std::string& link_name1, const std::string& link_name2);
+
+/** @brief The Plugin Information struct */
+// NOLINTNEXTLINE
+struct PluginInfo
 {
-  if (link_name1 <= link_name2)
-    return std::make_pair(link_name1, link_name2);
+  /** @brief The plugin class name */
+  std::string class_name;
 
-  return std::make_pair(link_name2, link_name1);
-}
+  /** @brief The plugin config data */
+  YAML::Node config;
+};
 
+/** @brief A map of PluginInfo to user defined name */
+using PluginInfoMap = std::map<std::string, PluginInfo>;
+
+struct PluginInfoContainer
+{
+  std::string default_plugin;
+  PluginInfoMap plugins;
+  void clear();
+};
+
+/** @brief The kinematics plugin information structure */
+struct KinematicsPluginInfo
+{
+  /** @brief A list of paths to search for plugins */
+  std::set<std::string> search_paths;
+
+  /** @brief A list of library names without the prefix or suffix that contain plugins*/
+  std::set<std::string> search_libraries;
+
+  /** @brief A map of group name to forward kinematics plugin information */
+  std::map<std::string, tesseract_common::PluginInfoContainer> fwd_plugin_infos;
+
+  /** @brief A map of group name to inverse kinematics plugin information */
+  std::map<std::string, tesseract_common::PluginInfoContainer> inv_plugin_infos;
+
+  /** @brief Insert the content of an other KinematicsPluginInfo */
+  void insert(const KinematicsPluginInfo& other);
+
+  /** @brief Clear the contents */
+  void clear();
+
+  /** @brief Check if structure is empty */
+  bool empty() const;
+
+  // Yaml Config key
+  static inline const std::string CONFIG_KEY{ "kinematic_plugins" };
+};
+
+/** @brief The contact managers plugin information structure */
+struct ContactManagersPluginInfo
+{
+  /** @brief A list of paths to search for plugins */
+  std::set<std::string> search_paths;
+
+  /** @brief A list of library names without the prefix or suffix that contain plugins*/
+  std::set<std::string> search_libraries;
+
+  /** @brief A map of name to discrete contact manager plugin information */
+  tesseract_common::PluginInfoContainer discrete_plugin_infos;
+
+  /** @brief A map of name to continuous contact manager plugin information */
+  tesseract_common::PluginInfoContainer continuous_plugin_infos;
+
+  /** @brief Insert the content of an other ContactManagersPluginInfo */
+  void insert(const ContactManagersPluginInfo& other);
+
+  /** @brief Clear the contents */
+  void clear();
+
+  /** @brief Check if structure is empty */
+  bool empty() const;
+
+  // Yaml Config key
+  static inline const std::string CONFIG_KEY{ "contact_manager_plugins" };
+};
 }  // namespace tesseract_common
+
 #endif  // TESSERACT_COMMON_TYPES_H

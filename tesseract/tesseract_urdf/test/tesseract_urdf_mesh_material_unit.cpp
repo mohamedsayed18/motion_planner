@@ -10,8 +10,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 TEST(TesseractURDFUnit, parse_mesh_material_dae)  // NOLINT
 {
-  std::shared_ptr<tesseract_scene_graph::SimpleResourceLocator> resource_locator =
-      std::make_shared<tesseract_scene_graph::SimpleResourceLocator>(locateResource);
+  tesseract_common::SimpleResourceLocator resource_locator(locateResource);
   {
     std::string str = R"(<mesh filename="package://tesseract_support/meshes/tesseract_material_mesh.dae"/>)";
     std::vector<tesseract_geometry::Mesh::Ptr> meshes;
@@ -23,14 +22,14 @@ TEST(TesseractURDFUnit, parse_mesh_material_dae)  // NOLINT
     auto& mesh2 = meshes[3];
     auto& mesh3 = meshes[0];
 
-    EXPECT_EQ(mesh0->getTriangleCount(), 34);
-    EXPECT_EQ(mesh0->getVerticeCount(), 68);
-    EXPECT_EQ(mesh1->getTriangleCount(), 15);
-    EXPECT_EQ(mesh1->getVerticeCount(), 17);
-    EXPECT_EQ(mesh2->getTriangleCount(), 15);
-    EXPECT_EQ(mesh2->getVerticeCount(), 17);
-    EXPECT_EQ(mesh3->getTriangleCount(), 2);
-    EXPECT_EQ(mesh3->getVerticeCount(), 4);
+    EXPECT_EQ(mesh0->getFaceCount(), 34);
+    EXPECT_EQ(mesh0->getVertexCount(), 68);
+    EXPECT_EQ(mesh1->getFaceCount(), 15);
+    EXPECT_EQ(mesh1->getVertexCount(), 17);
+    EXPECT_EQ(mesh2->getFaceCount(), 15);
+    EXPECT_EQ(mesh2->getVertexCount(), 17);
+    EXPECT_EQ(mesh3->getFaceCount(), 2);
+    EXPECT_EQ(mesh3->getVertexCount(), 4);
 
     auto mesh0_normals = mesh0->getNormals();
     ASSERT_TRUE(mesh0_normals != nullptr);
@@ -85,8 +84,7 @@ TEST(TesseractURDFUnit, parse_mesh_material_dae)  // NOLINT
 #ifdef TESSERACT_ASSIMP_USE_PBRMATERIAL
 TEST(TesseractURDFUnit, parse_mesh_material_gltf2)  // NOLINT
 {
-  std::shared_ptr<tesseract_scene_graph::SimpleResourceLocator> resource_locator =
-      std::make_shared<tesseract_scene_graph::SimpleResourceLocator>(locateResource);
+  tesseract_common::SimpleResourceLocator resource_locator(locateResource);
   {
     std::string str = R"(<mesh filename="package://tesseract_support/meshes/tesseract_material_mesh.glb"/>)";
     std::vector<tesseract_geometry::Mesh::Ptr> meshes;
@@ -98,14 +96,14 @@ TEST(TesseractURDFUnit, parse_mesh_material_gltf2)  // NOLINT
     auto& mesh2 = meshes[2];
     auto& mesh3 = meshes[3];
 
-    EXPECT_EQ(mesh0->getTriangleCount(), 34);
-    EXPECT_EQ(mesh0->getVerticeCount(), 68);
-    EXPECT_EQ(mesh1->getTriangleCount(), 15);
-    EXPECT_EQ(mesh1->getVerticeCount(), 17);
-    EXPECT_EQ(mesh2->getTriangleCount(), 15);
-    EXPECT_EQ(mesh2->getVerticeCount(), 17);
-    EXPECT_EQ(mesh3->getTriangleCount(), 2);
-    EXPECT_EQ(mesh3->getVerticeCount(), 4);
+    EXPECT_EQ(mesh0->getFaceCount(), 34);
+    EXPECT_EQ(mesh0->getVertexCount(), 68);
+    EXPECT_EQ(mesh1->getFaceCount(), 15);
+    EXPECT_EQ(mesh1->getVertexCount(), 17);
+    EXPECT_EQ(mesh2->getFaceCount(), 15);
+    EXPECT_EQ(mesh2->getVertexCount(), 17);
+    EXPECT_EQ(mesh3->getFaceCount(), 2);
+    EXPECT_EQ(mesh3->getVertexCount(), 4);
 
     auto mesh0_normals = mesh0->getNormals();
     ASSERT_TRUE(mesh0_normals != nullptr);

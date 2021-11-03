@@ -74,7 +74,7 @@ int TimeOptimalTrajectoryGenerationTaskGenerator::conditionalProcess(TaskInput i
   input.addTaskInfo(info);
   tesseract_common::Timer timer;
   timer.start();
-  saveInputs(info, input);
+  saveInputs(*info, input);
 
   // --------------------
   // Check that inputs are valid
@@ -83,14 +83,15 @@ int TimeOptimalTrajectoryGenerationTaskGenerator::conditionalProcess(TaskInput i
   if (!isCompositeInstruction(*input_results))
   {
     CONSOLE_BRIDGE_logError("Input results to TOTG must be a composite instruction");
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
 
   auto& ci = input_results->as<CompositeInstruction>();
   const ManipulatorInfo& manip_info = ci.getManipulatorInfo();
-  const auto fwd_kin = input.env->getManipulatorManager()->getFwdKinematicSolver(manip_info.manipulator);
+  auto joint_group = input.env->getJointGroup(manip_info.manipulator);
+  auto limits = joint_group->getLimits();
 
   // Get Composite Profile
   std::string profile = ci.getProfile();
@@ -105,7 +106,7 @@ int TimeOptimalTrajectoryGenerationTaskGenerator::conditionalProcess(TaskInput i
   {
     CONSOLE_BRIDGE_logWarn("TOTG found no MoveInstructions to process");
     info->return_value = 1;
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 1;
   }
@@ -149,13 +150,13 @@ int TimeOptimalTrajectoryGenerationTaskGenerator::conditionalProcess(TaskInput i
   // Copy the Composite before passing in because it will get flattened and resampled
   CompositeInstruction resampled(ci);
   if (!solver.computeTimeStamps(resampled,
-                                fwd_kin->getLimits().velocity_limits,
-                                fwd_kin->getLimits().acceleration_limits,
+                                limits.velocity_limits,
+                                limits.acceleration_limits,
                                 velocity_scaling_factor,
                                 acceleration_scaling_factor))
   {
     CONSOLE_BRIDGE_logInform("Failed to perform TOTG for process input: %s!", input_results->getDescription().c_str());
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
@@ -188,7 +189,7 @@ int TimeOptimalTrajectoryGenerationTaskGenerator::conditionalProcess(TaskInput i
 
   CONSOLE_BRIDGE_logDebug("TOTG succeeded");
   info->return_value = 1;
-  saveOutputs(info, input);
+  saveOutputs(*info, input);
   info->elapsed_time = timer.elapsedSeconds();
   return 1;
 }
@@ -201,7 +202,7 @@ void TimeOptimalTrajectoryGenerationTaskGenerator::process(TaskInput input, std:
 CompositeInstruction
 TimeOptimalTrajectoryGenerationTaskGenerator::unflatten(const CompositeInstruction& flattened_input,
                                                         const CompositeInstruction& pattern,
-                                                        double tolerance) const
+                                                        double tolerance)
 {
   CompositeInstruction unflattened(pattern);
   unflattened.setStartInstruction(flattened_input.getStartInstruction());
@@ -223,7 +224,7 @@ TimeOptimalTrajectoryGenerationTaskGenerator::unflatten(const CompositeInstructi
     if (isMoveInstruction(flattened_input.at(resample_idx)))
     {
       // Get the current position to see if we should increment original_idx
-      Eigen::VectorXd current_pt =
+      const Eigen::VectorXd& current_pt =
           getJointPosition(flattened_input.at(resample_idx).as<MoveInstruction>().getWaypoint());
       error = (last_pt_in_input - current_pt).cwiseAbs().maxCoeff();
 

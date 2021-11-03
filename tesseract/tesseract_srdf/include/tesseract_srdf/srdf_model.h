@@ -38,6 +38,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_srdf/kinematics_information.h>
 #include <tesseract_scene_graph/graph.h>
 #include <tesseract_scene_graph/allowed_collision_matrix.h>
+#include <tesseract_common/resource_locator.h>
 #include <tesseract_common/collision_margin_data.h>
 
 #ifdef SWIG
@@ -72,13 +73,17 @@ public:
    * @brief Load Model given a filename
    * @throws std::nested_exception if an error occurs during parsing srdf
    */
-  void initFile(const tesseract_scene_graph::SceneGraph& scene_graph, const std::string& filename);
+  void initFile(const tesseract_scene_graph::SceneGraph& scene_graph,
+                const std::string& filename,
+                const tesseract_common::ResourceLocator& locator);
 
   /**
    * @brief Load Model from a XML-string
    * @throws std::nested_exception if an error occurs during parsing srdf
    */
-  void initString(const tesseract_scene_graph::SceneGraph& scene_graph, const std::string& xmlstring);
+  void initString(const tesseract_scene_graph::SceneGraph& scene_graph,
+                  const std::string& xmlstring,
+                  const tesseract_common::ResourceLocator& locator);
 
   /** @brief Save the model to a file */
   bool saveToFile(const std::string& file_path) const;
@@ -92,11 +97,14 @@ public:
   /** @brief The version number major.minor[.patch] */
   std::array<int, 3> version{ { 1, 0, 0 } };
 
+  /** @brief Contact information related to kinematics */
+  KinematicsInformation kinematics_information;
+
+  /** @brief The contact managers plugin information */
+  tesseract_common::ContactManagersPluginInfo contact_managers_plugin_info;
+
   /** @brief The allowed collision matrix */
   tesseract_scene_graph::AllowedCollisionMatrix acm;
-
-  /** @brief A map of group opw kinematics data */
-  KinematicsInformation kinematics_information;
 
   /** @brief Collision margin data */
   tesseract_common::CollisionMarginData::Ptr collision_margin_data;

@@ -67,7 +67,7 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   input.addTaskInfo(info);
   tesseract_common::Timer timer;
   timer.start();
-  saveInputs(info, input);
+  saveInputs(*info, input);
 
   // --------------------
   // Check that inputs are valid
@@ -76,14 +76,15 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   if (!isCompositeInstruction(*input_results))
   {
     CONSOLE_BRIDGE_logError("Input results to iterative spline parameterization must be a composite instruction");
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
 
   auto& ci = input_results->as<CompositeInstruction>();
   const ManipulatorInfo& manip_info = ci.getManipulatorInfo();
-  const auto fwd_kin = input.env->getManipulatorManager()->getFwdKinematicSolver(manip_info.manipulator);
+  auto joint_group = input.env->getJointGroup(manip_info.manipulator);
+  auto limits = joint_group->getLimits();
 
   // Get Composite Profile
   std::string profile = ci.getProfile();
@@ -98,7 +99,7 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   {
     CONSOLE_BRIDGE_logWarn("Iterative spline time parameterization found no MoveInstructions to process");
     info->return_value = 1;
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 1;
   }
@@ -131,21 +132,21 @@ int IterativeSplineParameterizationTaskGenerator::conditionalProcess(TaskInput i
   // Solve using parameters
   TrajectoryContainer::Ptr trajectory = std::make_shared<InstructionsTrajectory>(ci);
   if (!solver_.compute(*trajectory,
-                       fwd_kin->getLimits().velocity_limits,
-                       fwd_kin->getLimits().acceleration_limits,
+                       limits.velocity_limits,
+                       limits.acceleration_limits,
                        velocity_scaling_factors,
                        acceleration_scaling_factors))
   {
     CONSOLE_BRIDGE_logInform("Failed to perform iterative spline time parameterization for process input: %s!",
                              input_results->getDescription().c_str());
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
 
   CONSOLE_BRIDGE_logDebug("Iterative spline time parameterization succeeded");
   info->return_value = 1;
-  saveOutputs(info, input);
+  saveOutputs(*info, input);
   info->elapsed_time = timer.elapsedSeconds();
   return 1;
 }

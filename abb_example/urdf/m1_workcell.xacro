@@ -19,6 +19,7 @@
   <joint name="world_to_abb" type="fixed">
     <parent link="world"/>
     <child link="base_link"/>
+    
     <origin xyz="1.8 0 1.2" rpy="0 0 3.14"/>
   </joint>
 

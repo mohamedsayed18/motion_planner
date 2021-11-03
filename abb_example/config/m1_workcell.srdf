@@ -1,52 +1,39 @@
 <?xml version="1.0" ?>
-<!--This does not replace URDF, and is not an extension of URDF.
-    This is a format for representing semantic information about the robot structure.
-    A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
--->
+
 <robot name="m1_workcell">
-    <!--GROUPS: Representation of a set of joints and links. This can be useful for specifying DOF to plan for, defining arms, end effectors, etc-->
-    <!--LINKS: When a link is specified, the parent joint of that link (if it exists) is automatically included-->
-    <!--JOINTS: When a joint is specified, the child link of that joint (which will always exist) is automatically included-->
-    <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
-    <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
-    <group name="manipulator">
-        <chain base_link="world" tip_link="tool0" />
+
+    <group name="robot_only">
+        <!-- <chain base_link="positioner_tool0" tip_link="tool0" /> -->
+        <chain base_link="base_link" tip_link="tool0" />
     </group>
+    
+    <group name="manipulator">
+        <chain base_link="positioner_tool0" tip_link="tool0" />
+        <!-- <chain base_link="world" tip_link="tool0" /> -->
+    </group>
+
+
+    <!-- Groups kinematic plugins -->
+    <kinematics_plugin_config filename="package://abb_example/config/m2_kin.yaml"/>
+
+    <!--Contact Managers plugins -->
+    <contact_managers_plugin_config filename="package://tesseract_ros_examples/config/contact_manager_plugins.yaml"/>
 
     <!--inverse kinematics-->
     <group name="positioner_only">
-        <chain base_link="world" tip_link="positioner_tool0"/>
+        <chain base_link="positioner_base_link" tip_link="positioner_tool0"/>
     </group>
 
-    <!--forward kinematics-->
-    <group name="full_manipulator">
-        <chain base_link="positioner_tool0" tip_link="tool0" />
-        <!--chain base_link="tool0" tip_link="positioner_tool0" /-->
-        <!--chain base_link="world" tip_link="positioner_tool0"/>
-        <chain base_link="world" tip_link="tool0" /-->
-    </group>
-
-    <!--group name="full_manipulator">
-        <joint name="positioner_joint_1" />
-        <joint name="joint_1" />
-        <joint name="positioner_base_joint" />
-        <joint name="joint_2" />
-        <joint name="joint_3" />
-        <joint name="joint_4" />
-        <joint name="joint_5" />
-        <joint name="joint_6" />
-    </group-->
-
-    <group_opw group="manipulator" a1="0.15" a2="-0.115" b="0" c1="0.445" c2="0.7" c3="0.795" c4="0.085" offsets="0.000000 0.000000 -1.570796 0.000000 0.000000 0.000000" sign_corrections="1 1 1 1 1 1"/>
+    <!-- <group_opw group="manipulator" a1="0.15" a2="-0.115" b="0" c1="0.445" c2="0.7" c3="0.795" c4="0.085" offsets="0.000000 0.000000 -1.570796 0.000000 0.000000 0.000000" sign_corrections="1 1 1 1 1 1"/> -->
 
     <!--GROUP ROBOT WITH EXTERNAL POSITIONER INVERSE KINEMATICS PARAMETERS-->
-    <group_rep group="full_manipulator">
-      <manipulator group="manipulator" ik_solver="OPWInvKin" reach="2.3"/>
+    <!-- <group_rep group="manipulator">
+      <manipulator group="robot" ik_solver="OPWInvKin" reach="2.3"/>
       <positioner group="positioner_only" fk_solver="KDLFwdKinChain">
         <joint name="positioner_joint_1" resolution="0.1"/>
         <joint name="positioner_base_joint" resolution="0.1"/>
       </positioner>
-    </group_rep>
+    </group_rep> -->
 
 
 
@@ -55,9 +42,9 @@
     <disable_collisions link1="base_link" link2="link_2" reason="Never" />
     <disable_collisions link1="base_link" link2="link_3" reason="Never" />
     <disable_collisions link1="base_link" link2="link_4" reason="Never" />
-    <disable_collisions link1="base_link" link2="positioner_link_1" reason="Never" />
+    <!-- <disable_collisions link1="base_link" link2="positioner_link_1" reason="Never" />
     <disable_collisions link1="base_link" link2="positioner_link_2" reason="Never" />
-    <disable_collisions link1="base_link" link2="positioner_tool0" reason="Never" />
+    <disable_collisions link1="base_link" link2="positioner_tool0" reason="Never" /> -->
 
     <disable_collisions link1="link_1" link2="link_2" reason="Adjacent" />
     <disable_collisions link1="link_1" link2="link_3" reason="Never" />
@@ -76,33 +63,33 @@
     <disable_collisions link1="link_4" link2="link_6" reason="Never" />
     <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
 
-    <disable_collisions link1="positioner_base_link" link2="positioner_link_1" reason="Adjacent" />
+    <!-- <disable_collisions link1="positioner_base_link" link2="positioner_link_1" reason="Adjacent" />
     <disable_collisions link1="positioner_base_link" link2="positioner_link_2" reason="Never" />
     <disable_collisions link1="positioner_base_link" link2="positioner_tool0" reason="Never" />
 
     <disable_collisions link1="positioner_base_link" link2="base_link" reason="Never" />
-    <disable_collisions link1="positioner_base_link" link2="link_1" reason="Never" />
-    <disable_collisions link1="positioner_base_link" link2="link_2" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="link_1" reason="Never" /> -->
+    <!--disable_collisions link1="positioner_base_link" link2="link_2" reason="Never" />
     <disable_collisions link1="positioner_base_link" link2="link_3" reason="Never" />
     <disable_collisions link1="positioner_base_link" link2="link_4" reason="Never" />
     <disable_collisions link1="positioner_base_link" link2="link_5" reason="Never" />
-    <disable_collisions link1="positioner_base_link" link2="link_6" reason="Never" />
+    <disable_collisions link1="positioner_base_link" link2="link_6" reason="Never" /-->
 
-    <disable_collisions link1="positioner_link_1" link2="positioner_link_2" reason="Adjacent" />
+    <!-- <disable_collisions link1="positioner_link_1" link2="positioner_link_2" reason="Adjacent" />
     <disable_collisions link1="positioner_link_1" link2="positioner_tool0" reason="Never" />
-    <disable_collisions link1="positioner_link_1" link2="link_1" reason="Never" />
-    <disable_collisions link1="positioner_link_1" link2="link_2" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="link_1" reason="Never" /> -->
+    <!--disable_collisions link1="positioner_link_1" link2="link_2" reason="Never" />
     <disable_collisions link1="positioner_link_1" link2="link_3" reason="Never" />
     <disable_collisions link1="positioner_link_1" link2="link_4" reason="Never" />
     <disable_collisions link1="positioner_link_1" link2="link_5" reason="Never" />
-    <disable_collisions link1="positioner_link_1" link2="link_6" reason="Never" />
+    <disable_collisions link1="positioner_link_1" link2="link_6" reason="Never" /-->
 
-    <disable_collisions link1="positioner_link_2" link2="positioner_tool0" reason="Adjacent" />
-    <disable_collisions link1="positioner_link_2" link2="link_1" reason="Never" />
-    <disable_collisions link1="positioner_link_2" link2="link_2" reason="Never" />
+    <!-- <disable_collisions link1="positioner_link_2" link2="positioner_tool0" reason="Adjacent" />
+    <disable_collisions link1="positioner_link_2" link2="link_1" reason="Never" /> -->
+    <!--disable_collisions link1="positioner_link_2" link2="link_2" reason="Never" />
     <disable_collisions link1="positioner_link_2" link2="link_3" reason="Never" />
     <disable_collisions link1="positioner_link_2" link2="link_4" reason="Never" />
     <disable_collisions link1="positioner_link_2" link2="link_5" reason="Never" />
-    <disable_collisions link1="positioner_link_2" link2="link_6" reason="Never" />
+    <disable_collisions link1="positioner_link_2" link2="link_6" reason="Never" /-->
 
 </robot>

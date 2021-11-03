@@ -34,10 +34,10 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_urdf/octree.h>
-#include <tesseract_scene_graph/resource_locator.h>
+#include <tesseract_common/resource_locator.h>
 
 tesseract_geometry::Octree::Ptr tesseract_urdf::parseOctree(const tinyxml2::XMLElement* xml_element,
-                                                            const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+                                                            const tesseract_common::ResourceLocator& locator,
                                                             tesseract_geometry::Octree::SubType shape_type,
                                                             bool prune,
                                                             int /*version*/)
@@ -46,7 +46,7 @@ tesseract_geometry::Octree::Ptr tesseract_urdf::parseOctree(const tinyxml2::XMLE
   if (tesseract_common::QueryStringAttribute(xml_element, "filename", filename) != tinyxml2::XML_SUCCESS)
     std::throw_with_nested(std::runtime_error("Octree: Missing or failed parsing attribute 'filename'!"));
 
-  tesseract_common::Resource::Ptr resource = locator->locateResource(filename);
+  tesseract_common::Resource::Ptr resource = locator.locateResource(filename);
   if (!resource || !resource->isFile())
     std::throw_with_nested(std::runtime_error("Octree: Missing resource '" + filename + "'!"));
 
@@ -63,4 +63,27 @@ tesseract_geometry::Octree::Ptr tesseract_urdf::parseOctree(const tinyxml2::XMLE
     std::throw_with_nested(std::runtime_error("Octree: Error creating octree geometry type from octomap::octree!"));
 
   return geom;
+}
+
+tinyxml2::XMLElement* tesseract_urdf::writeOctree(const tesseract_geometry::Octree::ConstPtr& octree,
+                                                  tinyxml2::XMLDocument& doc,
+                                                  const std::string& directory,
+                                                  const std::string& filename)
+{
+  if (octree == nullptr)
+    std::throw_with_nested(std::runtime_error("Octree is nullptr and cannot be converted to XML"));
+  tinyxml2::XMLElement* xml_element = doc.NewElement("octree");
+
+  std::string filepath = directory + filename;
+
+  // This copy is unfortunate, but avoiding the copy requires flowing mutability up to a lot of
+  // functions and their arguments. Don't know why writeBinary is non-const anyway, but we'll live.
+  std::shared_ptr<octomap::OcTree> underlying_tree = std::make_shared<octomap::OcTree>(*(octree->getOctree()));
+
+  if (!underlying_tree->writeBinary(filepath))
+    std::throw_with_nested(std::runtime_error("Could not write octree to file `" + filepath + "`!"));
+
+  xml_element->SetAttribute("filename", filename.c_str());
+
+  return xml_element;
 }

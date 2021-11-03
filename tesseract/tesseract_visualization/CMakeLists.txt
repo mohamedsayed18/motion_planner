@@ -15,6 +15,7 @@ find_package(tesseract_collision REQUIRED)
 find_package(tesseract_common REQUIRED)
 find_package(tesseract_environment REQUIRED)
 find_package(tesseract_scene_graph REQUIRED)
+find_package(tesseract_state_solver REQUIRED)
 
 # Optional to build ignition visualization
 find_package(ignition-common3 COMPONENTS profiler events av QUIET)
@@ -72,15 +73,16 @@ add_library(
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC Eigen3::Eigen
-         tesseract::tesseract_environment_core
+         tesseract::tesseract_environment
          tesseract::tesseract_scene_graph
+         tesseract::tesseract_state_solver_core
          tesseract::tesseract_collision_core
          tesseract::tesseract_common
          console_bridge::console_bridge)
 target_compile_options(${PROJECT_NAME} PRIVATE ${TESSERACT_COMPILE_OPTIONS_PRIVATE})
 target_compile_options(${PROJECT_NAME} PUBLIC ${TESSERACT_COMPILE_OPTIONS_PUBLIC})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${TESSERACT_COMPILE_DEFINITIONS})
-target_clang_tidy(${PROJECT_NAME} ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+target_clang_tidy(${PROJECT_NAME} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
 target_cxx_version(${PROJECT_NAME} PUBLIC VERSION ${TESSERACT_CXX_VERSION})
 target_code_coverage(
   ${PROJECT_NAME}
@@ -105,8 +107,7 @@ if(IGNITION_FOUND)
   target_compile_options(${PROJECT_NAME}_ignition PRIVATE ${TESSERACT_COMPILE_OPTIONS_PRIVATE})
   target_compile_options(${PROJECT_NAME}_ignition PUBLIC ${TESSERACT_COMPILE_OPTIONS_PUBLIC})
   target_compile_definitions(${PROJECT_NAME}_ignition PUBLIC ${TESSERACT_COMPILE_DEFINITIONS})
-  target_clang_tidy(${PROJECT_NAME}_ignition ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS}
-                    ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+  target_clang_tidy(${PROJECT_NAME}_ignition ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
   target_cxx_version(${PROJECT_NAME}_ignition PUBLIC VERSION ${TESSERACT_CXX_VERSION})
   target_code_coverage(
     ${PROJECT_NAME}_ignition
@@ -132,8 +133,7 @@ if(IGNITION_FOUND)
   target_compile_options(${PROJECT_NAME}_ignition_visualization PRIVATE ${TESSERACT_COMPILE_OPTIONS_PRIVATE})
   target_compile_options(${PROJECT_NAME}_ignition_visualization PUBLIC ${TESSERACT_COMPILE_OPTIONS_PUBLIC})
   target_compile_definitions(${PROJECT_NAME}_ignition_visualization PUBLIC ${TESSERACT_COMPILE_DEFINITIONS})
-  target_clang_tidy(${PROJECT_NAME}_ignition_visualization ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS}
-                    ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+  target_clang_tidy(${PROJECT_NAME}_ignition_visualization ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
   target_cxx_version(${PROJECT_NAME}_ignition_visualization PUBLIC VERSION ${TESSERACT_CXX_VERSION})
   target_code_coverage(
     ${PROJECT_NAME}_ignition_visualization
@@ -197,6 +197,7 @@ if(TESSERACT_PACKAGE)
       "${TESSERACT_PACKAGE_PREFIX}tesseract-common"
       "${TESSERACT_PACKAGE_PREFIX}tesseract-environment"
       "${TESSERACT_PACKAGE_PREFIX}tesseract-scene-graph"
+      "${TESSERACT_PACKAGE_PREFIX}tesseract-state-solver"
       "libconsole-bridge-dev"
       "libeigen3-dev"
     WINDOWS_DEPENDS
@@ -204,5 +205,6 @@ if(TESSERACT_PACKAGE)
       "${TESSERACT_PACKAGE_PREFIX}tesseract-common"
       "${TESSERACT_PACKAGE_PREFIX}tesseract-environment"
       "${TESSERACT_PACKAGE_PREFIX}tesseract-scene-graph"
+      "${TESSERACT_PACKAGE_PREFIX}tesseract-state-solver"
       "Eigen3")
 endif()

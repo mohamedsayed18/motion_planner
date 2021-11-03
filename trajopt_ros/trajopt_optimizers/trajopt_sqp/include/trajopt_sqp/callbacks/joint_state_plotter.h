@@ -53,32 +53,32 @@ public:
    * @param plotter Plotter used to plot the joint state
    */
   JointStatePlottingCallback(tesseract_visualization::Visualization::Ptr plotter,
-                             tesseract_environment::StateSolver::Ptr state_solver);
+                             tesseract_scene_graph::StateSolver::UPtr state_solver);
 
   /**
    * @brief Plot the joint_position variables as a tesseract trajectory
    * @param nlp Unused
    */
-  void plot(const ifopt::Problem& nlp);
+  void plot(const QPProblem& problem);
 
   /**
    * @brief Add a variable set to be plotted
    * @param joint_position JointPosition variable to be plotted. They should all be the same size
    */
-  void addVariableSet(const trajopt::JointPosition::ConstPtr& joint_position);
+  void addVariableSet(const trajopt_ifopt::JointPosition::ConstPtr& joint_position);
 
   /**
    * @brief Adds multiple variable sets to be plotted
    * @param joint_positions JointPosition variables to be plotted. They should all be the same size
    */
-  void addVariableSet(const std::vector<trajopt::JointPosition::ConstPtr>& joint_positions);
+  void addVariableSet(const std::vector<trajopt_ifopt::JointPosition::ConstPtr>& joint_positions);
 
-  bool execute(const ifopt::Problem& nlp, const trajopt_sqp::SQPResults& /*sqp_results*/) override;
+  bool execute(const QPProblem& problem, const trajopt_sqp::SQPResults& sqp_results) override;
 
 protected:
-  std::vector<trajopt::JointPosition::ConstPtr> joint_positions_;
+  std::vector<trajopt_ifopt::JointPosition::ConstPtr> joint_positions_;
   tesseract_visualization::Visualization::Ptr plotter_;
-  tesseract_environment::StateSolver::Ptr state_solver_;
+  tesseract_scene_graph::StateSolver::UPtr state_solver_;
 };
 }  // namespace trajopt_sqp
 

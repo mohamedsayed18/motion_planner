@@ -32,62 +32,12 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <string>
 #include <vector>
 #include <array>
+#include <map>
 #include <Eigen/Geometry>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_common/types.h>
 #include <tesseract_common/utils.h>
-
-namespace tesseract_srdf
-{
-/** @brief A structure to hold opw kinematics data */
-struct OPWKinematicParameters
-{
-  double a1 = 0, a2 = 0, b = 0, c1 = 0, c2 = 0, c3 = 0, c4 = 0;
-  std::array<double, 6> offsets = { 0, 0, 0, 0, 0, 0 };
-  std::array<signed char, 6> sign_corrections = { 1, 1, 1, 1, 1, 1 };
-
-  bool operator==(const OPWKinematicParameters& rhs) const;
-  bool operator!=(const OPWKinematicParameters& rhs) const;
-};
-
-struct ROPKinematicParameters
-{
-  /** @brief The name of the solver. If empty it will use the default solver name */
-  std::string solver_name;
-  std::string manipulator_group;
-  std::string manipulator_ik_solver;
-  double manipulator_reach;
-  std::string positioner_group;
-  std::string positioner_fk_solver;
-  std::unordered_map<std::string, double> positioner_sample_resolution;
-
-  bool operator==(const ROPKinematicParameters& rhs) const;
-  bool operator!=(const ROPKinematicParameters& rhs) const;
-};
-
-struct REPKinematicParameters
-{
-  /** @brief The name of the solver. If empty it will use the default solver name */
-  std::string solver_name;
-  std::string manipulator_group;
-  std::string manipulator_ik_solver;
-  double manipulator_reach;
-  std::string positioner_group;
-  std::string positioner_fk_solver;
-  std::unordered_map<std::string, double> positioner_sample_resolution;
-
-  bool operator==(const REPKinematicParameters& rhs) const;
-  bool operator!=(const REPKinematicParameters& rhs) const;
-};
-
-}  // namespace tesseract_srdf
-
-#ifdef SWIG
-%template(GroupOPWKinematics) std::unordered_map<std::string, tesseract_srdf::OPWKinematicParameters>;
-%template(GroupROPKinematics) std::unordered_map<std::string, tesseract_srdf::ROPKinematicParameters>;
-%template(GroupREPKinematics) std::unordered_map<std::string, tesseract_srdf::REPKinematicParameters>;
-#endif  // SWIG
 
 namespace tesseract_srdf
 {
@@ -102,11 +52,7 @@ using JointGroup = std::vector<std::string>;
 using JointGroups = std::unordered_map<std::string, JointGroup>;
 using LinkGroup = std::vector<std::string>;
 using LinkGroups = std::unordered_map<std::string, LinkGroup>;
-using GroupNames = std::vector<std::string>;
-using GroupROPKinematics = std::unordered_map<std::string, ROPKinematicParameters>;
-using GroupREPKinematics = std::unordered_map<std::string, REPKinematicParameters>;
-using GroupOPWKinematics = std::unordered_map<std::string, OPWKinematicParameters>;
-using GroupDefaultKinematicsSolver = std::unordered_map<std::string, std::string>;
+using GroupNames = std::set<std::string>;
 
 /**
  * @brief This hold the kinematics information used to create the SRDF and is the data
@@ -116,8 +62,8 @@ struct KinematicsInformation
 {
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-  /** @brief A vector of group names */
-  std::vector<std::string> group_names;
+  /** @brief A set of group names */
+  GroupNames group_names;
 
   /** @brief A map of chains groups*/
   ChainGroups chain_groups;
@@ -134,23 +80,64 @@ struct KinematicsInformation
   /** @brief A map of group tool center points */
   GroupTCPs group_tcps;
 
-  /** @brief A map of group opw kinematics data */
-  GroupOPWKinematics group_opw_kinematics;
+  /** @brief The kinematics plugin information */
+  tesseract_common::KinematicsPluginInfo kinematics_plugin_info;
 
-  /** @brief A map of robot on positioner groups */
-  GroupROPKinematics group_rop_kinematics;
-
-  /** @brief A map of robot with external positioner groups */
-  GroupREPKinematics group_rep_kinematics;
-
-  /** @brief A map of group default forward kinematics solvers */
-  GroupDefaultKinematicsSolver group_default_fwd_kin;
-
-  /** @brief A map of group default forward kinematics solvers */
-  GroupDefaultKinematicsSolver group_default_inv_kin;
+  /** @brief Insert the content of an other KinematicsInformation */
+  void insert(const KinematicsInformation& other);
 
   /** @brief Clear the kinematics information */
   void clear();
+
+  /** @brief Check if group exists */
+  bool hasGroup(const std::string& group_name) const;
+
+  /** @brief Add chain group */
+  void addChainGroup(const std::string& group_name, const ChainGroup& chain_group);
+
+  /** @brief Remove chain group */
+  void removeChainGroup(const std::string& group_name);
+
+  /** @brief Check if chain group exists */
+  bool hasChainGroup(const std::string& group_name) const;
+
+  /** @brief Add joint group */
+  void addJointGroup(const std::string& group_name, const JointGroup& joint_group);
+
+  /** @brief Remove joint group */
+  void removeJointGroup(const std::string& group_name);
+
+  /** @brief Check if joint group exists */
+  bool hasJointGroup(const std::string& group_name) const;
+
+  /** @brief Add link group */
+  void addLinkGroup(const std::string& group_name, const LinkGroup& link_group);
+
+  /** @brief Remove link group */
+  void removeLinkGroup(const std::string& group_name);
+
+  /** @brief Check if link group exists */
+  bool hasLinkGroup(const std::string& group_name) const;
+
+  /** @brief Add group joint state */
+  void addGroupJointState(const std::string& group_name,
+                          const std::string& state_name,
+                          const GroupsJointState& joint_state);
+
+  /** @brief Remove group joint state */
+  void removeGroupJointState(const std::string& group_name, const std::string& state_name);
+
+  /** @brief Check if group joint state exists */
+  bool hasGroupJointState(const std::string& group_name, const std::string& state_name) const;
+
+  /** @brief Add group tool center point */
+  void addGroupTCP(const std::string& group_name, const std::string& tcp_name, const Eigen::Isometry3d& tcp);
+
+  /** @brief Remove group tool center point */
+  void removeGroupTCP(const std::string& group_name, const std::string& tcp_name);
+
+  /** @brief Check if group tool center point exists */
+  bool hasGroupTCP(const std::string& group_name, const std::string& tcp_name) const;
 };
 
 }  // namespace tesseract_srdf

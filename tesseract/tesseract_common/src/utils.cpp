@@ -27,6 +27,7 @@
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <ctime>
+#include <string>
 #include <type_traits>
 #include <console_bridge/console.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
@@ -35,7 +36,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 namespace tesseract_common
 {
-// Implicit Instantiation
+// explicit Instantiation
 template bool toNumeric<double>(const std::string&, double&);
 template bool toNumeric<float>(const std::string&, float&);
 template bool toNumeric<int>(const std::string&, int&);
@@ -57,6 +58,98 @@ std::enable_if_t<std::is_polymorphic<E>::value> my_rethrow_if_nested(const E& e)
   const auto* p = dynamic_cast<const std::nested_exception*>(std::addressof(e));
   if (p && p->nested_ptr())
     p->rethrow_nested();
+}
+
+// LCOV_EXCL_START
+// These are tested in both tesseract_kinematics and tesseract_state_solver
+void twistChangeRefPoint(Eigen::Ref<Eigen::VectorXd> twist, const Eigen::Ref<const Eigen::Vector3d>& ref_point)
+{
+  twist(0) += twist(4) * ref_point(2) - twist(5) * ref_point(1);
+  twist(1) += twist(5) * ref_point(0) - twist(3) * ref_point(2);
+  twist(2) += twist(3) * ref_point(1) - twist(4) * ref_point(0);
+}
+
+void twistChangeBase(Eigen::Ref<Eigen::VectorXd> twist, const Eigen::Isometry3d& change_base)
+{
+  twist.head(3) = change_base.linear() * twist.head(3);
+  twist.tail(3) = change_base.linear() * twist.tail(3);
+}
+
+void jacobianChangeBase(Eigen::Ref<Eigen::MatrixXd> jacobian, const Eigen::Isometry3d& change_base)
+{
+  assert(jacobian.rows() == 6);
+  for (int i = 0; i < jacobian.cols(); i++)
+    twistChangeBase(jacobian.col(i), change_base);
+}
+
+void jacobianChangeRefPoint(Eigen::Ref<Eigen::MatrixXd> jacobian, const Eigen::Ref<const Eigen::Vector3d>& ref_point)
+{
+  assert(jacobian.rows() == 6);
+  for (int i = 0; i < jacobian.cols(); i++)
+    twistChangeRefPoint(jacobian.col(i), ref_point);
+}
+// LCOV_EXCL_STOP
+
+Eigen::VectorXd concat(const Eigen::VectorXd& a, const Eigen::VectorXd& b)
+{
+  Eigen::VectorXd out(a.size() + b.size());
+  out.topRows(a.size()) = a;
+  out.middleRows(a.size(), b.size()) = b;
+  return out;
+}
+
+Eigen::Vector3d calcRotationalError(const Eigen::Ref<const Eigen::Matrix3d>& R)
+{
+  Eigen::Quaterniond q(R);
+  Eigen::AngleAxisd r12(q);
+
+  // Eigen angle axis flips the sign of axis so rotation is always positive which is
+  // not ideal for numerical differentiation.
+  int s = (q.vec().dot(r12.axis()) < 0) ? -1 : 1;
+
+  // Make sure that the angle is on [-pi, pi]
+  const static double two_pi = 2.0 * M_PI;
+  double angle = s * r12.angle();
+  Eigen::Vector3d axis = s * r12.axis();
+  angle = copysign(fmod(fabs(angle), two_pi), angle);
+  if (angle < -M_PI)
+    angle += two_pi;
+  else if (angle > M_PI)
+    angle -= two_pi;
+
+  assert(std::abs(angle) <= M_PI);
+
+  return axis * angle;
+}
+
+Eigen::Vector3d calcRotationalError2(const Eigen::Ref<const Eigen::Matrix3d>& R)
+{
+  Eigen::Quaterniond q(R);
+  Eigen::AngleAxisd r12(q);
+
+  // Eigen angle axis flips the sign of axis so rotation is always positive which is
+  // not ideal for numerical differentiation.
+  int s = (q.vec().dot(r12.axis()) < 0) ? -1 : 1;
+
+  // Make sure that the angle is on [0, 2 * pi]
+  const static double two_pi = 2.0 * M_PI;
+  double angle = s * r12.angle();
+  Eigen::Vector3d axis = s * r12.axis();
+  angle = copysign(fmod(fabs(angle), two_pi), angle);
+  if (angle < 0)
+    angle += two_pi;
+  else if (angle > two_pi)
+    angle -= two_pi;
+
+  assert(angle <= two_pi && angle >= 0);
+
+  return axis * angle;
+}
+
+Eigen::VectorXd calcTransformError(const Eigen::Isometry3d& t1, const Eigen::Isometry3d& t2)
+{
+  Eigen::Isometry3d pose_err = t1.inverse() * t2;
+  return concat(pose_err.translation(), calcRotationalError(pose_err.rotation()));
 }
 
 Eigen::Vector4d computeRandomColor()
@@ -102,7 +195,7 @@ bool isNumeric(const std::string& s)
 
   ss << s;
 
-  double out;
+  double out{ 0 };
   ss >> out;
 
   return !(ss.fail() || !ss.eof());
@@ -159,7 +252,7 @@ void reorder(Eigen::Ref<Eigen::VectorXd> v, std::vector<Eigen::Index> order)
     if (order[i] == static_cast<Eigen::Index>(i))
       continue;
 
-    size_t j;
+    size_t j{ 0 };
     for (j = i + 1; j < order.size(); ++j)
     {
       if (order[j] == static_cast<Eigen::Index>(i))

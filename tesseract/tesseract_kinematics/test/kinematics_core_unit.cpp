@@ -3,45 +3,11 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <gtest/gtest.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
-#include <tesseract_kinematics/core/forward_kinematics_factory.h>
-#include <tesseract_kinematics/core/inverse_kinematics_factory.h>
 #include <tesseract_kinematics/kdl/kdl_fwd_kin_chain.h>
 #include <tesseract_kinematics/core/utils.h>
 #include "kinematics_test_utils.h"
 
 const static std::string FACTORY_NAME = "TestFactory";
-
-class TestForwardKinematicsFactory : public tesseract_kinematics::ForwardKinematicsFactory
-{
-  const std::string& getName() const override { return FACTORY_NAME; }
-  tesseract_kinematics::ForwardKinematicsFactoryType getType() const override
-  {
-    return tesseract_kinematics::ForwardKinematicsFactoryType::CHAIN;
-  }
-};
-
-class TestInverseKinematicsFactory : public tesseract_kinematics::InverseKinematicsFactory
-{
-  const std::string& getName() const override { return FACTORY_NAME; }
-  tesseract_kinematics::InverseKinematicsFactoryType getType() const override
-  {
-    return tesseract_kinematics::InverseKinematicsFactoryType::CHAIN;
-  }
-};
-
-TEST(TesseractKinematicsUnit, CoreFactoryUnit)  // NOLINT
-{
-  using namespace tesseract_kinematics;
-  TestForwardKinematicsFactory test_fwd_factory;
-  EXPECT_TRUE(test_fwd_factory.create(nullptr, "", "", "") == nullptr);
-  EXPECT_TRUE(test_fwd_factory.create(nullptr, std::vector<std::pair<std::string, std::string>>(), "") == nullptr);
-  EXPECT_TRUE(test_fwd_factory.create(nullptr, std::vector<std::string>(), "") == nullptr);
-
-  TestInverseKinematicsFactory test_inv_factory;
-  EXPECT_TRUE(test_inv_factory.create(nullptr, "", "", "") == nullptr);
-  EXPECT_TRUE(test_inv_factory.create(nullptr, std::vector<std::pair<std::string, std::string>>(), "") == nullptr);
-  EXPECT_TRUE(test_inv_factory.create(nullptr, std::vector<std::string>(), "") == nullptr);
-}
 
 TEST(TesseractKinematicsUnit, UtilsHarmonizeUnit)  // NOLINT
 {
@@ -163,6 +129,8 @@ void runRedundantSolutionsTest()
     EXPECT_EQ(solutions.size(), 0);
 
     redundancy_capable_joints = { 10 };
+
+    // NOLINTNEXTLINE
     EXPECT_THROW(tesseract_kinematics::getRedundantSolutions<FloatType>(q, limits, redundancy_capable_joints),
                  std::runtime_error);
   }
@@ -178,22 +146,21 @@ TEST(TesseractKinematicsUnit, UtilsNearSingularityUnit)  // NOLINT
 {
   tesseract_scene_graph::SceneGraph::Ptr scene_graph = tesseract_kinematics::test_suite::getSceneGraphABB();
 
-  tesseract_kinematics::KDLFwdKinChain fwd_kin;
-  fwd_kin.init(scene_graph, "base_link", "tool0", "manip");
+  tesseract_kinematics::KDLFwdKinChain fwd_kin(*scene_graph, "base_link", "tool0");
 
   // First test joint 4, 5 and 6 at zero which should be in a singularity
   Eigen::VectorXd jv = Eigen::VectorXd::Zero(6);
-  Eigen::MatrixXd jacobian = fwd_kin.calcJacobian(jv);
+  Eigen::MatrixXd jacobian = fwd_kin.calcJacobian(jv, "tool0");
   EXPECT_TRUE(tesseract_kinematics::isNearSingularity(jacobian, 0.001));
 
   // Set joint 5 angle to 1 deg and it with the default threshold it should still be in singularity
   jv[4] = 1 * M_PI / 180.0;
-  jacobian = fwd_kin.calcJacobian(jv);
+  jacobian = fwd_kin.calcJacobian(jv, "tool0");
   EXPECT_TRUE(tesseract_kinematics::isNearSingularity(jacobian));
 
   // Set joint 5 angle to 2 deg and it should no longer be in a singularity
   jv[4] = 2 * M_PI / 180.0;
-  jacobian = fwd_kin.calcJacobian(jv);
+  jacobian = fwd_kin.calcJacobian(jv, "tool0");
   EXPECT_FALSE(tesseract_kinematics::isNearSingularity(jacobian));
 
   // Increase threshold and now with joint 5 at 2 deg it will now be considered in a singularity
@@ -204,12 +171,11 @@ TEST(TesseractKinematicsUnit, UtilscalcManipulabilityUnit)  // NOLINT
 {
   tesseract_scene_graph::SceneGraph::Ptr scene_graph = tesseract_kinematics::test_suite::getSceneGraphABB();
 
-  tesseract_kinematics::KDLFwdKinChain fwd_kin;
-  fwd_kin.init(scene_graph, "base_link", "tool0", "manip");
+  tesseract_kinematics::KDLFwdKinChain fwd_kin(*scene_graph, "base_link", "tool0");
 
   // First test joint 4, 5 and 6 at zero which should be in a singularity
   Eigen::VectorXd jv = Eigen::VectorXd::Zero(6);
-  Eigen::MatrixXd jacobian = fwd_kin.calcJacobian(jv);
+  Eigen::MatrixXd jacobian = fwd_kin.calcJacobian(jv, "tool0");
   tesseract_kinematics::Manipulability m = tesseract_kinematics::calcManipulability(jacobian);
   EXPECT_EQ(m.m.eigen_values.size(), 6);
   EXPECT_NEAR(m.m.volume, 0, 1e-6);

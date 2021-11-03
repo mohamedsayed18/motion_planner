@@ -23,17 +23,11 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 namespace tesseract_kinematics
 {
-AbbIRB2400Kinematics::AbbIRB2400Kinematics(const tesseract_kinematics::ForwardKinematics::ConstPtr& fwd_kin)
-  : IKFastInvKin()
+AbbIRB2400Kinematics::AbbIRB2400Kinematics(std::string base_link_name,
+                                           std::string tip_link_name,
+                                           std::vector<std::string> joint_names)
+  : IKFastInvKin(base_link_name, tip_link_name, joint_names)
 {
-  init(fwd_kin->getName(),
-       fwd_kin->getBaseLinkName(),
-       fwd_kin->getTipLinkName(),
-       fwd_kin->getJointNames(),
-       fwd_kin->getLinkNames(),
-       fwd_kin->getActiveLinkNames(),
-       fwd_kin->getLimits(),
-       fwd_kin->getRedundancyCapableJointIndices());
 }
 
 }  // namespace tesseract_kinematics

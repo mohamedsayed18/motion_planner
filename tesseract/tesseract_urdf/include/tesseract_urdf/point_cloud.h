@@ -36,8 +36,10 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 namespace tinyxml2
 {
 class XMLElement;
-}
-namespace tesseract_scene_graph
+class XMLDocument;
+}  // namespace tinyxml2
+
+namespace tesseract_common
 {
 class ResourceLocator;
 }
@@ -53,12 +55,11 @@ namespace tesseract_urdf
  * @param version The version number
  * @return A Tesseract Geometry Octree
  */
-std::shared_ptr<tesseract_geometry::Octree>
-parsePointCloud(const tinyxml2::XMLElement* xml_element,
-                const std::shared_ptr<tesseract_scene_graph::ResourceLocator>& locator,
-                tesseract_geometry::Octree::SubType shape_type,
-                bool prune,
-                int version);
+std::shared_ptr<tesseract_geometry::Octree> parsePointCloud(const tinyxml2::XMLElement* xml_element,
+                                                            const tesseract_common::ResourceLocator& locator,
+                                                            tesseract_geometry::Octree::SubType shape_type,
+                                                            bool prune,
+                                                            int version);
 }  // namespace tesseract_urdf
 
 #endif  // TESSERACT_URDF_POINT_CLOUD_H

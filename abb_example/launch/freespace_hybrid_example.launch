@@ -9,15 +9,21 @@
   <arg name="range" default="0.01"/>
   <arg name="planning_time" default="10.0"/>
 
-  <!-- Load universal robot description format (URDF) -->
-  <param name="$(arg robot_description)" command="$(find xacro)/xacro --inorder '$(find tesseract_ros_examples)/urdf/lbr_iiwa_14_r820.xacro'" />
 
+  <param name="$(arg robot_description)" command="$(find xacro)/xacro --inorder '$(find abb_example)/urdf/m12_workcell.xacro'" />
   <!-- The semantic description that corresponds to the URDF -->
-  <param name="$(arg robot_description)_semantic" textfile="$(find tesseract_ros_examples)/config/kuka_lbr_iiwa_14_r820.srdf" />
+  <!-- <param name="$(arg robot_description)_semantic" textfile="$(find tesseract_ros_examples)/config/kuka_lbr_iiwa_14_r820.srdf" /> -->
+  <param name="$(arg robot_description)_semantic" textfile="$(find abb_example)/config/m1_workcell.srdf" />
+  <!-- Load universal robot description format (URDF) -->
+
+  <!-- Load updated joint limits (override information from URDF) -->
+  <!-- <group ns="$(arg robot_description)_planning">
+    <rosparam command="load" file="$(find tesseract_ros_examples)/config/joint_limits.yaml"/>
+  </group> -->
 
   <!-- Load updated joint limits (override information from URDF) -->
   <group ns="$(arg robot_description)_planning">
-    <rosparam command="load" file="$(find tesseract_ros_examples)/config/joint_limits.yaml"/>
+    <rosparam command="load" file="$(find abb_irb2600_support)/config/joint_limits.yaml"/>
   </group>
 
   <!-- Load default settings for kinematics; these settings are overridden by settings in a node's namespace -->
@@ -29,7 +35,7 @@
     <!-- If needed, broadcast static tf for robot root -->
     <node pkg="tf" type="static_transform_publisher" name="virtual_joint_broadcaster_0" args="0 0 0 0 0 0 world base_link 100" />
 
-    <node pkg="tesseract_ros_examples" type="tesseract_ros_examples_freespace_hybrid_example_node" name="tesseract_ros_examples_freespace_hybrid_example_node">
+    <node pkg="abb_example" type="abb_example_freespace_hybrid_example_node" name="abb_example_freespace_hybrid_example_node">
       <param name="plotting" type="bool" value="$(arg plotting)"/>
       <param name="rviz" type="bool" value="$(arg rviz)"/>
       <param name="range" type="double" value="$(arg range)"/>

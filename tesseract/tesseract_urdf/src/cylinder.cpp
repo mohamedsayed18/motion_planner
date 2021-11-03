@@ -36,7 +36,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 tesseract_geometry::Cylinder::Ptr tesseract_urdf::parseCylinder(const tinyxml2::XMLElement* xml_element,
                                                                 int /*version*/)
 {
-  double r, l;
+  double r{ 0 }, l{ 0 };
   if (xml_element->QueryDoubleAttribute("length", &(l)) != tinyxml2::XML_SUCCESS || !(l > 0))
     std::throw_with_nested(std::runtime_error("Cylinder: Missing or failed parsing attribute 'length'!"));
 
@@ -44,4 +44,15 @@ tesseract_geometry::Cylinder::Ptr tesseract_urdf::parseCylinder(const tinyxml2::
     std::throw_with_nested(std::runtime_error("Cylinder: Missing or failed parsing attribute 'radius'!"));
 
   return std::make_shared<tesseract_geometry::Cylinder>(r, l);
+}
+
+tinyxml2::XMLElement* tesseract_urdf::writeCylinder(const std::shared_ptr<const tesseract_geometry::Cylinder>& cylinder,
+                                                    tinyxml2::XMLDocument& doc)
+{
+  if (cylinder == nullptr)
+    std::throw_with_nested(std::runtime_error("Cylinder is nullptr and cannot be converted to XML"));
+  tinyxml2::XMLElement* xml_element = doc.NewElement("cylinder");
+  xml_element->SetAttribute("length", cylinder->getLength());
+  xml_element->SetAttribute("radius", cylinder->getRadius());
+  return xml_element;
 }

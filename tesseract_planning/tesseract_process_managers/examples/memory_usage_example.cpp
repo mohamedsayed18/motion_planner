@@ -31,12 +31,11 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <string>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
-#include <tesseract_common/types.h>
-#include <tesseract_environment/core/environment.h>
-#include <tesseract_environment/ofkt/ofkt_state_solver.h>
-#include <tesseract_command_language/command_language.h>
 #include "freespace_example_program.h"
 
+#include <tesseract_common/types.h>
+#include <tesseract_environment/environment.h>
+#include <tesseract_command_language/command_language.h>
 #include <tesseract_command_language/utils/utils.h>
 #include <tesseract_process_managers/core/process_planning_server.h>
 #include <tesseract_visualization/visualization_loader.h>
@@ -111,8 +110,8 @@ void process_mem_usage(double& vm_usage, double& resident_set)
 
   // the two fields we want
   //
-  unsigned long vsize;
-  long rss;
+  unsigned long vsize{ 0 };
+  long rss{ 0 };
 
   stat_stream >> pid >> comm >> state >> ppid >> pgrp >> session >> tty_nr >> tpgid >> flags >> minflt >> cminflt >>
       majflt >> cmajflt >> utime >> stime >> cutime >> cstime >> priority >> nice >> O >> itrealvalue >> starttime >>
@@ -143,12 +142,11 @@ int main()
   // --------------------
   // Perform setup
   // --------------------
-  tesseract_scene_graph::ResourceLocator::Ptr locator =
-      std::make_shared<tesseract_scene_graph::SimpleResourceLocator>(locateResource);
+  auto locator = std::make_shared<tesseract_common::SimpleResourceLocator>(locateResource);
   tesseract_environment::Environment::Ptr env = std::make_shared<tesseract_environment::Environment>();
   tesseract_common::fs::path urdf_path(std::string(TESSERACT_SUPPORT_DIR) + "/urdf/lbr_iiwa_14_r820.urdf");
   tesseract_common::fs::path srdf_path(std::string(TESSERACT_SUPPORT_DIR) + "/urdf/lbr_iiwa_14_r820.srdf");
-  env->init<tesseract_environment::OFKTStateSolver>(urdf_path, srdf_path, locator);
+  env->init(urdf_path, srdf_path, locator);
 
   // Create Process Planning Server
   ProcessPlanningServer planning_server(std::make_shared<ProcessEnvironmentCache>(env), 5);
@@ -158,7 +156,7 @@ int main()
   using Clock = std::chrono::high_resolution_clock;
   auto t1 = Clock::now();
   auto t2 = Clock::now();
-  double vm, rss;
+  double vm{ NAN }, rss{ NAN };
   while (std::chrono::duration_cast<std::chrono::seconds>(t2 - t1).count() < 3600)
   {
     ProcessPlanningRequest request1 = getPlanningRequest();

@@ -1,0 +1,1771 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 78
+    Name: Displays
+    Property Tree Widget:
+      Expanded:
+        - /Global Options1
+        - /Status1
+        - /TesseractTrajectory1
+        - /TesseractTrajectory1/Environment1
+        - /TesseractTrajectory1/Links1
+        - /TesseractTrajectory1/Links1/ati_dock2_tool01
+        - /TesseractTrajectory1/Links1/ati_dock_tool01
+        - /EnvironmentState1
+      Splitter Ratio: 0.43062201142311096
+    Tree Height: 719
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+      - /Publish Point1
+    Name: Tool Properties
+    Splitter Ratio: 0.5886790156364441
+  - Class: rviz/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+  - Class: rviz/Time
+    Experimental: false
+    Name: Time
+    SyncMode: 0
+    SyncSource: ""
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: tesseract_rviz/TesseractTrajectory
+      Enabled: true
+      Environment:
+        Alpha: 1
+        Display Mode: Monitor
+        Monitor Namespace: tesseract_workcell_environment
+        Show All Links: true
+        Show Collision: false
+        Show Highlights: true
+        Show Visual: true
+        Value: ""
+      Joint State Monitor:
+        Topic: joint_states
+        Value: ""
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        ati_dock1_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_link_1: Never
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_dock1_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_dock2_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_dock2_tool0:
+          Alpha: 1
+          Show Axes: true
+          Show Trail: false
+        ati_dock_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_qc110f_base_link: Allways
+              ati_qc110m_base_link: Allways
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Allways
+              pushcorp_afd620_link_1: Allways
+              pushcorp_stc1015_base_link: Never
+              robot_link_3: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_dock_tool0:
+          Alpha: 1
+          Show Axes: true
+          Show Trail: false
+        ati_qc110f_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock_base_link: Allways
+              ati_qc110m_base_link: Allways
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_qc110f_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_qc110m_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Allways
+              ati_qc110f_base_link: Allways
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_qc110m_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_stand_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_stand_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_stand_tool1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel1_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel1_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel2_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel2_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel3_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Allways
+              pushcorp_stc1015_base_link: Allways
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel3_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel4_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel4_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel5_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_stc1015_base_link: Allways
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel5_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel6_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel6_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        logo_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        part_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pedestal_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              st_base_link: Allowed
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pedestal_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Allways
+              pushcorp_stc1015_base_link: Allways
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pedestal_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        positioner_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pedestal_base_link: Never
+              positioner_link_1: Adjacent
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        positioner_link_1:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Adjacent
+              positioner_link_2: Adjacent
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        positioner_link_2:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Adjacent
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        positioner_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pushcorp_afd620_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Allways
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel3_base_link: Allways
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pedestal_base_link: Allways
+              pushcorp_afd620_link_1: Adjacent
+              pushcorp_stc1015_base_link: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_afd620_link_1:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock_base_link: Allways
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Adjacent
+              pushcorp_stc1015_base_link: Allways
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_afd620_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pushcorp_stc1015_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel3_base_link: Allways
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Allways
+              fence_panel6_base_link: Never
+              pedestal_base_link: Allways
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Allways
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Allways
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_stc1015_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_link_1: Adjacent
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_1:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Adjacent
+              robot_link_2: Adjacent
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_2:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              positioner_base_link: Never
+              robot_link_1: Adjacent
+              robot_link_3: Adjacent
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_3:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              positioner_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Adjacent
+              robot_link_4: Adjacent
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_4:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Adjacent
+              robot_link_5: Adjacent
+              robot_link_6: Allways
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_5:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Adjacent
+              robot_link_6: Adjacent
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_6:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Allways
+              robot_link_5: Adjacent
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        st_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              part_link: Allowed
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Allways
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        st_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        st_tool0_offset:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: TesseractTrajectory
+      Trajectory Monitor:
+        Topic: /tesseract/display_tesseract_trajectory
+        Value: ""
+      Trajectory Visualization:
+        Display Mode: Loop
+        Interrupt Display: false
+        Time Scale: 1
+        Trail Step Size: 1
+        Value: ""
+      Value: true
+    - Class: tesseract_rviz/EnvironmentState
+      Enabled: true
+      Environment:
+        Alpha: 1
+        Display Mode: Monitor
+        Monitor Namespace: tesseract_workcell_environment
+        Show All Links: true
+        Show Collision: false
+        Show Highlights: true
+        Show Visual: true
+        Value: ""
+      Joint State Monitor:
+        Topic: joint_states
+        Value: ""
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        ati_dock1_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_link_1: Never
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_dock1_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_dock2_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_dock2_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_dock_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_qc110f_base_link: Allways
+              ati_qc110m_base_link: Allways
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Allways
+              pushcorp_afd620_link_1: Allways
+              pushcorp_stc1015_base_link: Never
+              robot_link_3: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_dock_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_qc110f_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock_base_link: Allways
+              ati_qc110m_base_link: Allways
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_qc110f_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_qc110m_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Allways
+              ati_qc110f_base_link: Allways
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_qc110m_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_stand_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        ati_stand_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        ati_stand_tool1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel1_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel1_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel2_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel2_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel3_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Allways
+              pushcorp_stc1015_base_link: Allways
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel3_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel4_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel4_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel5_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_stc1015_base_link: Allways
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel5_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        fence_panel6_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        fence_panel6_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        logo_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        part_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pedestal_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              st_base_link: Allowed
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pedestal_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              pushcorp_afd620_base_link: Allways
+              pushcorp_stc1015_base_link: Allways
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pedestal_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        positioner_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pedestal_base_link: Never
+              positioner_link_1: Adjacent
+              positioner_link_2: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Never
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        positioner_link_1:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Adjacent
+              positioner_link_2: Adjacent
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        positioner_link_2:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Adjacent
+              robot_base_link: Never
+              robot_link_1: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        positioner_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pushcorp_afd620_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Allways
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel3_base_link: Allways
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pedestal_base_link: Allways
+              pushcorp_afd620_link_1: Adjacent
+              pushcorp_stc1015_base_link: Never
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_afd620_link_1:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock_base_link: Allways
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              pushcorp_afd620_base_link: Adjacent
+              pushcorp_stc1015_base_link: Allways
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_afd620_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        pushcorp_stc1015_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel3_base_link: Allways
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Allways
+              fence_panel6_base_link: Never
+              pedestal_base_link: Allways
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Allways
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Allways
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pushcorp_stc1015_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot_base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        robot_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_link_1: Adjacent
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_1:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock1_base_link: Never
+              ati_dock2_base_link: Never
+              ati_stand_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel3_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel5_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              part_link: Never
+              pedestal_base_link: Never
+              positioner_base_link: Never
+              positioner_link_1: Never
+              positioner_link_2: Never
+              robot_base_link: Adjacent
+              robot_link_2: Adjacent
+              robot_link_3: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_2:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              positioner_base_link: Never
+              robot_link_1: Adjacent
+              robot_link_3: Adjacent
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_3:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel1_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              positioner_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_base_link: Never
+              robot_link_1: Never
+              robot_link_2: Adjacent
+              robot_link_4: Adjacent
+              robot_link_5: Never
+              robot_link_6: Never
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_4:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Adjacent
+              robot_link_5: Adjacent
+              robot_link_6: Allways
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_5:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Adjacent
+              robot_link_6: Adjacent
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_link_6:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel2_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              logo_base_link: Never
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Never
+              robot_link_2: Never
+              robot_link_3: Never
+              robot_link_4: Allways
+              robot_link_5: Adjacent
+              st_base_link: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        robot_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        st_base_link:
+          Alpha: 1
+          Collision:
+            ACM:
+              ati_dock2_base_link: Never
+              ati_dock_base_link: Never
+              ati_qc110f_base_link: Never
+              ati_qc110m_base_link: Never
+              fence_panel4_base_link: Never
+              fence_panel6_base_link: Never
+              part_link: Allowed
+              pushcorp_afd620_base_link: Never
+              pushcorp_afd620_link_1: Never
+              pushcorp_stc1015_base_link: Allways
+              robot_link_3: Never
+              robot_link_4: Never
+              robot_link_5: Never
+              robot_link_6: Never
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        st_tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        st_tool0_offset:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        world:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: EnvironmentState
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /tesseract/display_tool_path
+      Name: Toolpath
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Default Light: true
+    Fixed Frame: world
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+    - Class: rviz/SetInitialPose
+      Theta std deviation: 0.2617993950843811
+      Topic: /initialpose
+      X std deviation: 0.5
+      Y std deviation: 0.5
+    - Class: rviz/SetGoal
+      Topic: /move_base_simple/goal
+    - Class: rviz/PublishPoint
+      Single click: true
+      Topic: /clicked_point
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 3.2118372917175293
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Field of View: 0.7853981852531433
+      Focal Point:
+        X: 0.9946324825286865
+        Y: -0.8196523785591125
+        Z: 1.5906606912612915
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.36539921164512634
+      Target Frame: <Fixed Frame>
+      Yaw: 3.0004148483276367
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 1016
+  Hide Left Dock: false
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd0000000400000000000002000000035afc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d0000035a000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000120020002d00200053006c00690064006500720000000000ffffffff0000000000000000fb00000038005400650073007300650072006100630074005400720061006a006500630074006f007200790020002d00200053006c00690064006500720000000000ffffffff0000001600000016000000010000010f0000035afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d0000035a000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002eb00fffffffb0000000800540069006d00650100000000000004500000000000000000000004650000035a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Selection:
+    collapsed: false
+  TesseractTrajectory - Slider:
+    collapsed: false
+  Time:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
+  Views:
+    collapsed: false
+  Width: 1920
+  X: 3840
+  Y: 27

@@ -57,7 +57,7 @@ macro(add_gtest test_name test_file)
             ${LIBFCL_LIBRARIES})
   target_compile_options(${test_name} PRIVATE ${TESSERACT_COMPILE_OPTIONS_PRIVATE} ${TESSERACT_COMPILE_OPTIONS_PUBLIC})
   target_compile_definitions(${test_name} PRIVATE ${TESSERACT_COMPILE_DEFINITIONS})
-  target_clang_tidy(${test_name} ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+  target_clang_tidy(${test_name} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
   target_cxx_version(${test_name} PRIVATE VERSION ${TESSERACT_CXX_VERSION})
   target_code_coverage(
     ${test_name}
@@ -91,3 +91,5 @@ add_gtest(${PROJECT_NAME}_compound_compound_unit collision_compound_compound_uni
 add_gtest(${PROJECT_NAME}_sphere_sphere_cast_unit collision_sphere_sphere_cast_unit.cpp)
 add_gtest(${PROJECT_NAME}_octomap_octomap_unit collision_octomap_octomap_unit.cpp)
 add_gtest(${PROJECT_NAME}_collision_margin_data_unit collision_margin_data_unit.cpp)
+add_gtest(${PROJECT_NAME}_factory_unit contact_managers_factory_unit.cpp)
+add_gtest(${PROJECT_NAME}_core_unit collision_core_unit.cpp)

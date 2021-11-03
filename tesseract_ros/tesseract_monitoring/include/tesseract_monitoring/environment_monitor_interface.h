@@ -33,9 +33,8 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <tesseract_msgs/GetEnvironmentInformation.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
-#include <tesseract_environment/core/commands.h>
-#include <tesseract_environment/core/environment.h>
-#include <tesseract_environment/ofkt/ofkt_state_solver.h>
+#include <tesseract_environment/commands.h>
+#include <tesseract_environment/environment.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_monitoring/constants.h>
 
@@ -46,6 +45,8 @@ class EnvironmentMonitorInterface
 public:
   using Ptr = std::shared_ptr<EnvironmentMonitorInterface>;
   using ConstPtr = std::shared_ptr<const EnvironmentMonitorInterface>;
+  using UPtr = std::unique_ptr<EnvironmentMonitorInterface>;
+  using ConstUPtr = std::unique_ptr<const EnvironmentMonitorInterface>;
 
   EnvironmentMonitorInterface(const std::string& env_name);
   virtual ~EnvironmentMonitorInterface() = default;
@@ -63,7 +64,7 @@ public:
 
   /**
    * @brief This will wait for a given namespace to begin publishing
-   * @param monitor_namespace The namepace to wait for
+   * @param monitor_namespace The namespace to wait for
    * @param seconds The number of seconds to wait before returning, if zero it waits indefinitely
    * @return True if namespace is available, otherwise false
    */
@@ -106,7 +107,7 @@ public:
    * @param monitor_namespace The namespace to extract the environment from.
    * @return Environment Shared Pointer, if nullptr it failed
    */
-  tesseract_environment::EnvState::Ptr getEnvironmentState(const std::string& monitor_namespace) const;
+  tesseract_scene_graph::SceneState getEnvironmentState(const std::string& monitor_namespace) const;
 
   /**
    * @brief Set environments state in the provided namespace
@@ -137,35 +138,7 @@ public:
    * @param monitor_namespace The namespace to extract the environment from.
    * @return Environment Shared Pointer, if nullptr it failed
    */
-  template <typename S>
-  static tesseract_environment::Environment::Ptr getEnvironment(const std::string& monitor_namespace)
-  {
-    tesseract_msgs::GetEnvironmentInformation res;
-    res.request.flags = tesseract_msgs::GetEnvironmentInformationRequest::COMMAND_HISTORY;
-
-    bool status = ros::service::call(R"(/)" + monitor_namespace + DEFAULT_GET_ENVIRONMENT_INFORMATION_SERVICE, res);
-    if (!status || !res.response.success)
-    {
-      ROS_ERROR_STREAM_NAMED(monitor_namespace, "getEnvironment: Failed to get monitor environment information!");
-      return nullptr;
-    }
-
-    tesseract_environment::Commands commands;
-    try
-    {
-      commands = tesseract_rosutils::fromMsg(res.response.command_history);
-    }
-    catch (...)
-    {
-      ROS_ERROR_STREAM_NAMED(monitor_namespace, "getEnvironment: Failed to convert command history message!");
-      return nullptr;
-    }
-
-    auto env = std::make_shared<tesseract_environment::Environment>();
-    env->init<S>(commands);
-
-    return env;
-  }
+  static tesseract_environment::Environment::UPtr getEnvironment(const std::string& monitor_namespace);
 
 protected:
   ros::NodeHandle nh_;

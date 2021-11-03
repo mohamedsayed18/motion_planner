@@ -31,7 +31,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <trajopt/problem_description.hpp>
 #include <tesseract_common/timer.h>
-#include <tesseract_environment/core/utils.h>
+#include <tesseract_environment/utils.h>
 
 #include <tesseract_process_managers/core/utils.h>
 #include <tesseract_process_managers/task_generators/fix_state_collision_task_generator.h>
@@ -51,18 +51,15 @@ bool StateInCollision(const Eigen::Ref<const Eigen::VectorXd>& start_pos,
   using namespace tesseract_environment;
 
   auto env = input.env;
-  auto kin = env->getManipulatorManager()->getFwdKinematicSolver(input.manip_info.manipulator);
+  auto joint_group = env->getJointGroup(input.manip_info.manipulator);
 
   std::vector<ContactResultMap> collisions;
   DiscreteContactManager::Ptr manager = env->getDiscreteContactManager();
-  AdjacencyMap::Ptr adjacency_map = std::make_shared<tesseract_environment::AdjacencyMap>(
-      env->getSceneGraph(), kin->getActiveLinkNames(), env->getCurrentState()->link_transforms);
-
-  manager->setActiveCollisionObjects(adjacency_map->getActiveLinkNames());
+  manager->setActiveCollisionObjects(joint_group->getActiveLinkNames());
   manager->setCollisionMarginData(profile.collision_check_config.collision_margin_data);
   collisions.clear();
 
-  tesseract_environment::EnvState::Ptr state = env->getState(kin->getJointNames(), start_pos);
+  tesseract_common::TransformMap state = joint_group->calcFwdKin(start_pos);
   if (!checkTrajectoryState(collisions, *manager, state, profile.collision_check_config))
   {
     CONSOLE_BRIDGE_logDebug("No collisions found");
@@ -70,18 +67,18 @@ bool StateInCollision(const Eigen::Ref<const Eigen::VectorXd>& start_pos,
       CONSOLE_BRIDGE_logDebug("StateInCollision does not support longest valid segment logic");
     return false;
   }
-  else
+
+  CONSOLE_BRIDGE_logDebug("Waypoint is not contact free!");
+  for (std::size_t i = 0; i < collisions.size(); i++)
   {
-    CONSOLE_BRIDGE_logDebug("Waypoint is not contact free!");
-    for (std::size_t i = 0; i < collisions.size(); i++)
-      for (const auto& contact_vec : collisions[i])
-      {
-        for (const auto& contact : contact_vec.second)
-          CONSOLE_BRIDGE_logDebug(("timestep: " + std::to_string(i) + " Links: " + contact.link_names[0] + ", " +
-                                   contact.link_names[1] + " Dist: " + std::to_string(contact.distance))
-                                      .c_str());
-        contacts = collisions[i];
-      }
+    for (const auto& contact_vec : collisions[i])
+    {
+      for (const auto& contact : contact_vec.second)
+        CONSOLE_BRIDGE_logDebug(("timestep: " + std::to_string(i) + " Links: " + contact.link_names[0] + ", " +
+                                 contact.link_names[1] + " Dist: " + std::to_string(contact.distance))
+                                    .c_str());
+      contacts = collisions[i];
+    }
   }
 
   return true;
@@ -123,7 +120,7 @@ bool MoveWaypointFromCollisionTrajopt(Waypoint& waypoint,
     CONSOLE_BRIDGE_logError("MoveWaypointFromCollision error: %s", e.what());
     return false;
   }
-  std::size_t num_jnts = static_cast<std::size_t>(start_pos.size());
+  auto num_jnts = static_cast<std::size_t>(start_pos.size());
 
   // Setup trajopt problem with basic info
   ProblemConstructionInfo pci(input.env);
@@ -132,7 +129,7 @@ bool MoveWaypointFromCollisionTrajopt(Waypoint& waypoint,
   pci.basic_info.use_time = false;
 
   // Create Kinematic Object
-  pci.kin = pci.getManipulator(pci.basic_info.manip);
+  pci.kin = pci.env->getJointGroup(pci.basic_info.manip);
 
   // Initialize trajectory to waypoint position
   pci.init_info.type = InitInfo::GIVEN_TRAJ;
@@ -141,7 +138,7 @@ bool MoveWaypointFromCollisionTrajopt(Waypoint& waypoint,
 
   // Add constraint that position is allowed to be within a tolerance of the original position
   {
-    Eigen::MatrixX2d limits = pci.getManipulator(pci.basic_info.manip)->getLimits().joint_limits;
+    Eigen::MatrixX2d limits = pci.kin->getLimits().joint_limits;
     Eigen::VectorXd range = limits.col(1).array() - limits.col(0).array();
     Eigen::VectorXd pos_tolerance = range * profile.jiggle_factor;
     Eigen::VectorXd neg_tolerance = range * -profile.jiggle_factor;
@@ -166,7 +163,7 @@ bool MoveWaypointFromCollisionTrajopt(Waypoint& waypoint,
     collision->evaluator_type = trajopt::CollisionEvaluatorType::SINGLE_TIMESTEP;
     collision->first_step = 0;
     collision->last_step = 0;
-    collision->info = createSafetyMarginDataVector(
+    collision->info = util::createSafetyMarginDataVector(
         pci.basic_info.n_steps, profile.collision_check_config.collision_margin_data.getMaxCollisionMargin(), 1);
     collision->use_weighted_sum = true;
     pci.cnt_infos.push_back(collision);
@@ -179,7 +176,7 @@ bool MoveWaypointFromCollisionTrajopt(Waypoint& waypoint,
     collision->evaluator_type = trajopt::CollisionEvaluatorType::SINGLE_TIMESTEP;
     collision->first_step = 0;
     collision->last_step = 0;
-    collision->info = createSafetyMarginDataVector(
+    collision->info = util::createSafetyMarginDataVector(
         pci.basic_info.n_steps, profile.collision_check_config.collision_margin_data.getMaxCollisionMargin(), 20);
     collision->use_weighted_sum = true;
     pci.cost_infos.push_back(collision);
@@ -216,7 +213,7 @@ bool MoveWaypointFromCollisionRandomSampler(Waypoint& waypoint,
     return false;
   }
 
-  const auto kin = input.env->getManipulatorManager()->getFwdKinematicSolver(input.manip_info.manipulator);
+  tesseract_kinematics::JointGroup::UPtr kin = input.env->getJointGroup(input.manip_info.manipulator);
   Eigen::MatrixXd limits = kin->getLimits().joint_limits;
   Eigen::VectorXd range = limits.col(1).array() - limits.col(0).array();
 
@@ -263,7 +260,7 @@ bool ApplyCorrectionWorkflow(Waypoint& waypoint,
     }
   }
   // If all methods have tried without returning, then correction failed
-  WaypointInCollision(waypoint, input, profile, contacts);
+  WaypointInCollision(waypoint, input, profile, contacts);  // NOLINT Not sure why clang-tidy errors here
   return false;
 }
 
@@ -286,7 +283,7 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
   input.addTaskInfo(info);
   tesseract_common::Timer timer;
   timer.start();
-  saveInputs(info, input);
+  saveInputs(*info, input);
 
   // --------------------
   // Check that inputs are valid
@@ -296,7 +293,7 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
   {
     info->message = "Input seed to FixStateCollision must be a composite instruction";
     CONSOLE_BRIDGE_logError("%s", info->message.c_str());
-    saveOutputs(info, input);
+    saveOutputs(*info, input);
     info->elapsed_time = timer.elapsedSeconds();
     return 0;
   }
@@ -315,9 +312,9 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
     case FixStateCollisionProfile::Settings::START_ONLY:
     {
       const PlanInstruction* instr_const_ptr = getFirstPlanInstruction(ci);
-      if (instr_const_ptr)
+      if (instr_const_ptr != nullptr)
       {
-        PlanInstruction* mutable_instruction = const_cast<PlanInstruction*>(instr_const_ptr);
+        auto* mutable_instruction = const_cast<PlanInstruction*>(instr_const_ptr);  // NOLINT
         info->contact_results.resize(1);
         if (WaypointInCollision(
                 mutable_instruction->getWaypoint(), input, *cur_composite_profile, info->contact_results[0]))
@@ -326,7 +323,7 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
           if (!ApplyCorrectionWorkflow(
                   mutable_instruction->getWaypoint(), input, *cur_composite_profile, info->contact_results[0]))
           {
-            saveOutputs(info, input);
+            saveOutputs(*info, input);
             info->elapsed_time = timer.elapsedSeconds();
             return 0;
           }
@@ -337,9 +334,9 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
     case FixStateCollisionProfile::Settings::END_ONLY:
     {
       const PlanInstruction* instr_const_ptr = getLastPlanInstruction(ci);
-      if (instr_const_ptr)
+      if (instr_const_ptr != nullptr)
       {
-        PlanInstruction* mutable_instruction = const_cast<PlanInstruction*>(instr_const_ptr);
+        auto* mutable_instruction = const_cast<PlanInstruction*>(instr_const_ptr);  // NOLINT
         info->contact_results.resize(1);
         if (WaypointInCollision(
                 mutable_instruction->getWaypoint(), input, *cur_composite_profile, info->contact_results[0]))
@@ -348,7 +345,7 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
           if (!ApplyCorrectionWorkflow(
                   mutable_instruction->getWaypoint(), input, *cur_composite_profile, info->contact_results[0]))
           {
-            saveOutputs(info, input);
+            saveOutputs(*info, input);
             info->elapsed_time = timer.elapsedSeconds();
             return 0;
           }
@@ -386,12 +383,12 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
         if (in_collision_vec[i])
         {
           const Instruction* instr_const_ptr = &flattened[i].get();
-          Instruction* mutable_instruction = const_cast<Instruction*>(instr_const_ptr);
+          auto* mutable_instruction = const_cast<Instruction*>(instr_const_ptr);  // NOLINT
           auto& plan = mutable_instruction->as<PlanInstruction>();
 
           if (!ApplyCorrectionWorkflow(plan.getWaypoint(), input, *cur_composite_profile, info->contact_results[i]))
           {
-            saveOutputs(info, input);
+            saveOutputs(*info, input);
             info->elapsed_time = timer.elapsedSeconds();
             return 0;
           }
@@ -401,14 +398,14 @@ int FixStateCollisionTaskGenerator::conditionalProcess(TaskInput input, std::siz
     break;
     case FixStateCollisionProfile::Settings::DISABLED:
       info->return_value = 1;
-      saveOutputs(info, input);
+      saveOutputs(*info, input);
       info->elapsed_time = timer.elapsedSeconds();
       return 1;
   }
 
   CONSOLE_BRIDGE_logDebug("FixStateCollisionTaskGenerator succeeded");
   info->return_value = 1;
-  saveOutputs(info, input);
+  saveOutputs(*info, input);
   info->elapsed_time = timer.elapsedSeconds();
   return 1;
 }

@@ -30,22 +30,54 @@
 TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <Eigen/Eigen>
 #include <ifopt/cost_term.h>
+#include <ifopt/problem.h>
 TRAJOPT_IGNORE_WARNINGS_POP
 
-namespace trajopt
+namespace trajopt_ifopt
 {
+bool isFinite(double value);
+
+/**
+ * @brief Check if bounds are equality where upper and lower are finite and equal
+ * @param bounds The bounds to check
+ * @return True if equality bounds, otherwise false
+ */
+bool isBoundsEquality(const ifopt::Bounds& bounds);
+
+/**
+ * @brief Check if bounds are [finite, ifopt::inf]
+ * @param bounds The bounds to check
+ * @return True if bounds are [finite, ifopt::inf], otherwise false
+ */
+bool isBoundsGreaterFinite(const ifopt::Bounds& bounds);
+
+/**
+ * @brief Check if bounds are [-ifopt::inf, finite]
+ * @param bounds The bounds to check
+ * @return True if bounds are [-ifopt::inf, finite], otherwise false
+ */
+bool isBoundsSmallerFinite(const ifopt::Bounds& bounds);
+
+/**
+ * @brief Check if bounds are [finite, ifopt::inf] or [-ifopt::inf, finite]
+ * @param bounds The bounds to check
+ * @return True if bounds are [finite, ifopt::inf] or [-ifopt::inf, finite], otherwise false
+ */
+bool isBoundsInEquality(const ifopt::Bounds& bounds);
+
+/**
+ * @brief Check if bounds are [finite, finite]
+ * @param bounds The bounds to check
+ * @return True if bounds are [finite, finite], otherwise false
+ */
+bool isBoundsFiniteFinite(const ifopt::Bounds& bounds);
+
 /**
  * @brief Converts a MatrixX2d (e.g. from forward_kinematics->getLimits()) to a vector of ifopt Bounds
  * @param limits MatrixX2d of bounds. Column 0 will be lower bound. Column 1 will be upper bound
  * @return Vector of ifopt::Bounds
  */
-inline std::vector<ifopt::Bounds> toBounds(const Eigen::Ref<const Eigen::MatrixX2d>& limits)
-{
-  std::vector<ifopt::Bounds> bounds;
-  for (Eigen::Index i = 0; i < limits.rows(); i++)
-    bounds.emplace_back(limits(i, 0), limits(i, 1));
-  return bounds;
-}
+std::vector<ifopt::Bounds> toBounds(const Eigen::Ref<const Eigen::MatrixX2d>& limits);
 
 /**
  * @brief Converts 2 VectorXd to a vector of ifopt Bounds
@@ -53,15 +85,8 @@ inline std::vector<ifopt::Bounds> toBounds(const Eigen::Ref<const Eigen::MatrixX
  * @param upper_limits Upper limits
  * @return  Vector of ifopt::Bounds
  */
-inline std::vector<ifopt::Bounds> toBounds(const Eigen::Ref<const Eigen::VectorXd>& lower_limits,
-                                           const Eigen::Ref<const Eigen::VectorXd>& upper_limits)
-{
-  assert(lower_limits.size() == upper_limits.size());
-  Eigen::MatrixX2d limits(lower_limits.rows(), 2);
-  limits.col(0) = lower_limits;
-  limits.col(1) = upper_limits;
-  return toBounds(limits);
-}
+std::vector<ifopt::Bounds> toBounds(const Eigen::Ref<const Eigen::VectorXd>& lower_limits,
+                                    const Eigen::Ref<const Eigen::VectorXd>& upper_limits);
 
 /**
  * @brief Interpolates between two Eigen::VectorXds
@@ -70,21 +95,9 @@ inline std::vector<ifopt::Bounds> toBounds(const Eigen::Ref<const Eigen::VectorX
  * @param steps Length of the returned vector
  * @return A vector of Eigen vectors interpolated from start to end
  */
-inline std::vector<Eigen::VectorXd> interpolate(const Eigen::Ref<const Eigen::VectorXd>& start,
-                                                const Eigen::Ref<const Eigen::VectorXd>& end,
-                                                Eigen::Index steps)
-{
-  assert(start.size() == end.size());
-  Eigen::VectorXd delta = (end - start) / static_cast<double>(steps - 1);
-  Eigen::VectorXd running = start;
-  std::vector<Eigen::VectorXd> results;
-  for (Eigen::Index i = 0; i < steps; i++)
-  {
-    results.push_back(running);
-    running += delta;
-  }
-  return results;
-}
+std::vector<Eigen::VectorXd> interpolate(const Eigen::Ref<const Eigen::VectorXd>& start,
+                                         const Eigen::Ref<const Eigen::VectorXd>& end,
+                                         Eigen::Index steps);
 
 /**
  * @brief Gets the closes vector to the input given the bounds
@@ -92,24 +105,30 @@ inline std::vector<Eigen::VectorXd> interpolate(const Eigen::Ref<const Eigen::Ve
  * @param bounds Bounds on that vector
  * @return Output vector. If input is outside a bound, force it to the boundary
  */
-inline Eigen::VectorXd getClosestValidPoint(const Eigen::Ref<const Eigen::VectorXd>& input,
-                                            std::vector<ifopt::Bounds> bounds)
-{
-  // Convert Bounds to VectorXds
-  Eigen::VectorXd bound_lower(static_cast<Eigen::Index>(bounds.size()));
-  Eigen::VectorXd bound_upper(static_cast<Eigen::Index>(bounds.size()));
-  for (std::size_t i = 0; i < bounds.size(); i++)
-  {
-    bound_lower[static_cast<Eigen::Index>(i)] = bounds[i].lower_;
-    bound_upper[static_cast<Eigen::Index>(i)] = bounds[i].upper_;
-  }
+Eigen::VectorXd getClosestValidPoint(const Eigen::Ref<const Eigen::VectorXd>& input,
+                                     const std::vector<ifopt::Bounds>& bounds);
 
-  // If input is outside a bound, force it to the boundary
-  Eigen::VectorXd valid_point(static_cast<Eigen::Index>(bounds.size()));
-  valid_point = input.cwiseMax(bound_lower);
-  valid_point = valid_point.cwiseMin(bound_upper);
-  return valid_point;
-}
+/**
+ * @brief Calculate errors of the bounds
+ * @param input The input values
+ * @param bounds The bounds
+ * @return The error given the bounds, if within the bounds it will be zero
+ */
+Eigen::VectorXd calcBoundsErrors(const Eigen::Ref<const Eigen::VectorXd>& input,
+                                 const std::vector<ifopt::Bounds>& bounds);
 
-}  // namespace trajopt
+/**
+ * @brief The absolute value of the Bounds Errors
+ * @param input The input values
+ * @param bounds The bounds
+ * @return The absolute errors given the bounds, if within the bounds it will be zero
+ */
+Eigen::VectorXd calcBoundsViolations(const Eigen::Ref<const Eigen::VectorXd>& input,
+                                     const std::vector<ifopt::Bounds>& bounds);
+
+ifopt::Problem::VectorXd calcNumericalCostGradient(const double* x, ifopt::Problem& nlp, double epsilon = 1e-8);
+
+ifopt::Problem::Jacobian calcNumericalConstraintGradient(const double* x, ifopt::Problem& nlp, double epsilon = 1e-8);
+
+}  // namespace trajopt_ifopt
 #endif

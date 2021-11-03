@@ -8,7 +8,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <tinyxml2.h>
 #include <console_bridge/console.h>
 #include <tesseract_scene_graph/utils.h>
-#include <tesseract_scene_graph/resource_locator.h>
+#include <tesseract_common/resource_locator.h>
 #include <tesseract_urdf/urdf_parser.h>
 #include <tesseract_common/utils.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
@@ -69,12 +69,11 @@ bool runTest(ElementType& type,
 template <typename ElementType>
 bool runTest(
     ElementType& type,
-    std::function<
-        ElementType(const tinyxml2::XMLElement*, const tesseract_scene_graph::ResourceLocator::Ptr&, bool, const int)>
+    std::function<ElementType(const tinyxml2::XMLElement*, const tesseract_common::ResourceLocator&, bool, const int)>
         func,
     const std::string& xml_string,
     const std::string& element_name,
-    const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+    const tesseract_common::ResourceLocator& locator,
     int version,
     bool visual)
 {
@@ -100,11 +99,10 @@ bool runTest(
 template <typename ElementType>
 bool runTest(
     ElementType& type,
-    std::function<
-        ElementType(const tinyxml2::XMLElement*, const tesseract_scene_graph::ResourceLocator::Ptr&, const int)> func,
+    std::function<ElementType(const tinyxml2::XMLElement*, const tesseract_common::ResourceLocator&, const int)> func,
     const std::string& xml_string,
     const std::string& element_name,
-    const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+    const tesseract_common::ResourceLocator& locator,
     int version)
 {
   tinyxml2::XMLDocument xml_doc;
@@ -129,12 +127,12 @@ bool runTest(
 template <typename ElementType>
 bool runTest(ElementType& type,
              std::function<ElementType(const tinyxml2::XMLElement*,
-                                       const tesseract_scene_graph::ResourceLocator::Ptr&,
+                                       const tesseract_common::ResourceLocator&,
                                        std::unordered_map<std::string, tesseract_scene_graph::Material::Ptr>&,
                                        const int)> func,
              const std::string& xml_string,
              const std::string& element_name,
-             const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+             const tesseract_common::ResourceLocator& locator,
              std::unordered_map<std::string, tesseract_scene_graph::Material::Ptr>& available_materials,
              int version)
 {
@@ -186,6 +184,184 @@ bool runTest(ElementType& type,
   }
 
   return true;
+}
+
+/**
+ * @brief writeTest - test write functions
+ * @param type - object of type being tested
+ * @param func - function to write object to URDF-XML
+ * @param text - xml text generated
+ * @return 0 if success, 1 if exception thrown, 2 if nullptr generated
+ */
+template <typename TessType>
+int writeTest(TessType& type,
+              std::function<tinyxml2::XMLElement*(const TessType&, tinyxml2::XMLDocument&)> func,
+              std::string& text)
+{
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLPrinter printer;
+  std::stringstream ss;
+  int status = 0;
+  try
+  {
+    tinyxml2::XMLElement* element = func(type, doc);
+    if (element != nullptr)
+    {
+      element->Accept(&printer);
+      ss << printer.CStr();
+      text = ss.str();
+      status = 0;
+    }
+    else
+    {
+      text = "";
+      status = 2;
+    }
+  }
+  catch (...)
+  {
+    text = "";
+    status = 1;
+  }
+  return status;
+}
+
+/**
+ * @brief writeTest - test write functions for links
+ * @param type - object of type being tested
+ * @param func - function to write object to URDF-XML
+ * @param text - xml text generated
+ * @param directory - directory to save files
+ * @return 0 if success, 1 if exception thrown, 2 if nullptr generated
+ */
+template <typename TessType>
+int writeTest(TessType& type,
+              std::function<tinyxml2::XMLElement*(const TessType&, tinyxml2::XMLDocument&, const std::string&)> func,
+              std::string& text,
+              const std::string& directory)
+{
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLPrinter printer;
+  std::stringstream ss;
+  int status = 0;
+  try
+  {
+    tinyxml2::XMLElement* element = func(type, doc, directory);
+    if (element != nullptr)
+    {
+      element->Accept(&printer);
+      ss << printer.CStr();
+      text = ss.str();
+      status = 0;
+    }
+    else
+    {
+      text = "";
+      status = 2;
+    }
+  }
+  catch (...)
+  {
+    text = "";
+    status = 1;
+  }
+  return status;
+}
+
+/**
+ * @brief writeTest - test write functions for meshes
+ * @param type - object of type being tested
+ * @param func - function to write object to URDF-XML
+ * @param text - xml text generated
+ * @param directory - directory to save files
+ * @param filename - name of link to which geometry is attached
+ * @return 0 if success, 1 if exception thrown, 2 if nullptr generated
+ */
+template <typename TessType>
+int writeTest(
+    TessType& type,
+    std::function<
+        tinyxml2::XMLElement*(const TessType&, tinyxml2::XMLDocument&, const std::string&, const std::string&)> func,
+    std::string& text,
+    const std::string& directory,
+    const std::string& filename)
+{
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLPrinter printer;
+  std::stringstream ss;
+  int status = 0;
+  try
+  {
+    tinyxml2::XMLElement* element = func(type, doc, directory, filename);
+    if (element != nullptr)
+    {
+      element->Accept(&printer);
+      ss << printer.CStr();
+      text = ss.str();
+      status = 0;
+    }
+    else
+    {
+      text = "";
+      status = 2;
+    }
+  }
+  catch (...)
+  {
+    text = "";
+    status = 1;
+  }
+  return status;
+}
+
+/**
+ * @brief writeTest - test write functions for collision and visual geometries
+ * @param type - object of type being tested
+ * @param func - function to write object to URDF-XML
+ * @param text - xml text generated
+ * @param directory - directory to save files
+ * @param link_name - name of link to which geometry is attached
+ * @param id - index of this geometry in list
+ * @return 0 if success, 1 if exception thrown, 2 if nullptr generated
+ */
+template <typename TessType>
+int writeTest(TessType& type,
+              std::function<tinyxml2::XMLElement*(const TessType&,
+                                                  tinyxml2::XMLDocument&,
+                                                  const std::string&,
+                                                  const std::string&,
+                                                  const int)> func,
+              std::string& text,
+              const std::string& directory,
+              const std::string& link_name,
+              const int id)
+{
+  tinyxml2::XMLDocument doc;
+  tinyxml2::XMLPrinter printer;
+  std::stringstream ss;
+  int status = 0;
+  try
+  {
+    tinyxml2::XMLElement* element = func(type, doc, directory, link_name, id);
+    if (element != nullptr)
+    {
+      element->Accept(&printer);
+      ss << printer.CStr();
+      text = ss.str();
+      status = 0;
+    }
+    else
+    {
+      text = "";
+      status = 2;
+    }
+  }
+  catch (...)
+  {
+    text = "";
+    status = 1;
+  }
+  return status;
 }
 
 #endif  // TESSERACT_URDF_COMMON_UNIT_H

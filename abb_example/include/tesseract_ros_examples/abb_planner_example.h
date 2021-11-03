@@ -23,8 +23,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef TESSERACT_ROS_ABB_PLANNER_EXAMPLE_H
-#define TESSERACT_ROS_ABB_PLANNER_EXAMPLE_H
+#ifndef ABB_PLANNER_EXAMPLE_H
+#define ABB_PLANNER_EXAMPLE_H
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
@@ -36,31 +36,30 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 namespace tesseract_ros_examples
 {
-/**
+  /**
  * @brief An example of a robot leveraging OMPL RRTConnect to generate a freespace motion trajectory the TrajOpt to
  * optimize
  */
-class AbbPlannerExample : public Example
-{
-public:
-  AbbPlannerExample(const ros::NodeHandle& nh, bool plotting, bool rviz, double range, double planning_time);
-  ~AbbPlannerExample() override = default;
-  AbbPlannerExample(const AbbPlannerExample&) = default;
-  AbbPlannerExample& operator=(const AbbPlannerExample&) = default;
-  AbbPlannerExample(AbbPlannerExample&&) = default;
-  AbbPlannerExample& operator=(AbbPlannerExample&&) = default;
+  class AbbPlannerExample : public Example
+  {
+  public:
+    AbbPlannerExample(const ros::NodeHandle &nh, bool plotting, bool rviz, double range, double planning_time);
+    ~AbbPlannerExample() override = default;
+    AbbPlannerExample(const AbbPlannerExample &) = default;
+    AbbPlannerExample &operator=(const AbbPlannerExample &) = default;
+    AbbPlannerExample(AbbPlannerExample &&) = default;
+    AbbPlannerExample &operator=(AbbPlannerExample &&) = default;
 
-  bool run() override;
-  tesseract_common::VectorIsometry3d getPoses();
+    tesseract_common::VectorIsometry3d getPoses();
 
-private:
-  ros::NodeHandle nh_;
-  double range_;
-  double planning_time_;
+    bool run() override;
 
-  tesseract_environment::Command::Ptr addSphere();
-};
+  private:
+    ros::NodeHandle nh_;
+    double range_;
+    double planning_time_;
+  };
 
-}  // namespace tesseract_ros_examples
+} // namespace tesseract_ros_examples
 
-#endif  // TESSERACT_ROS_FREESPACE_HYBRID_EXAMPLE_H
+#endif // TESSERACT_ROS_FREESPACE_HYBRID_EXAMPLE_H

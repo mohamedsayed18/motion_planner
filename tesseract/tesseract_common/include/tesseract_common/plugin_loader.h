@@ -28,7 +28,7 @@
 
 #include <tesseract_common/macros.h>
 TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
-#include <list>
+#include <set>
 #include <unordered_map>
 #include <string>
 #include <memory>
@@ -49,7 +49,7 @@ namespace tesseract_common
  * used for looding Example: TESSERACT_ADD_PLUGIN(my_namespace::MyPlugin, plugin)
  *
  *   PluginLoader loader;
- *   loader.plugins["plugin"] = "my_plugin"; // libmy_plugin.so
+ *   loader.search_libraries.insert("my_plugin"); // libmy_plugin.so
  *   std::shared_ptr<PluginBase> p = loader.instantiate<PluginBase>("plugin");
  */
 class PluginLoader
@@ -59,19 +59,21 @@ public:
   bool search_system_folders{ true };
 
   /** @brief A list of paths to search for plugins */
-  std::list<std::string> search_paths;
+  std::set<std::string> search_paths;
 
-  /** @brief A map of plugin names to libraries */
-  std::unordered_map<std::string, std::string> plugins;
+  /** @brief A list of library names without the prefix or sufix that contain plugins*/
+  std::set<std::string> search_libraries;
 
   /** @brief The environment variable containing plugin search paths */
   std::string search_paths_env;
 
-  /** @brief The environment variable containing plugins
-   * @details The plugins are store ins the following formate. The library name does not contain prefix or suffix
-   *   Format: plugin_name,library_name:plugin_name1,library_name1
+  /**
+   * @brief The environment variable containing plugins
+   * @details The plugins are store ins the following formate.
+   * The library name does not contain prefix or suffix
+   *   Format: library_name:library_name1:library_name2
    */
-  std::string plugins_env;
+  std::string search_libraries_env;
 
   /**
    * @brief Instantiate a plugin with the provided name

@@ -35,27 +35,26 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_urdf/point_cloud.h>
 #include <tesseract_scene_graph/utils.h>
-#include <tesseract_scene_graph/resource_locator.h>
+#include <tesseract_common/resource_locator.h>
 
-tesseract_geometry::Octree::Ptr
-tesseract_urdf::parsePointCloud(const tinyxml2::XMLElement* xml_element,
-                                const tesseract_scene_graph::ResourceLocator::Ptr& locator,
-                                tesseract_geometry::Octree::SubType shape_type,
-                                bool prune,
-                                int /*version*/)
+tesseract_geometry::Octree::Ptr tesseract_urdf::parsePointCloud(const tinyxml2::XMLElement* xml_element,
+                                                                const tesseract_common::ResourceLocator& locator,
+                                                                tesseract_geometry::Octree::SubType shape_type,
+                                                                bool prune,
+                                                                int /*version*/)
 {
   std::string filename;
   if (tesseract_common::QueryStringAttribute(xml_element, "filename", filename) != tinyxml2::XML_SUCCESS)
     std::throw_with_nested(std::runtime_error("PointCloud: Missing or failed parsing attribute 'filename'!"));
 
-  double resolution;
+  double resolution{ 0 };
   if (xml_element->QueryDoubleAttribute("resolution", &resolution) != tinyxml2::XML_SUCCESS)
     std::throw_with_nested(std::runtime_error("PointCloud: Missing or failed parsing point_cloud attribute "
                                               "'resolution'!"));
 
   auto cloud = std::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
 
-  tesseract_common::Resource::Ptr located_resource = locator->locateResource(filename);
+  tesseract_common::Resource::Ptr located_resource = locator.locateResource(filename);
   if (!located_resource || !located_resource->isFile())
   {
     // TODO: Handle point clouds that are not files

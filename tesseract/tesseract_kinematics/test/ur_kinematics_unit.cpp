@@ -34,69 +34,49 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_kinematics/kdl/kdl_fwd_kin_chain.h>
 
 using namespace tesseract_kinematics::test_suite;
+using namespace tesseract_kinematics;
 
-void runURKinematicsTests(const tesseract_kinematics::URParameters& params, const Eigen::Isometry3d& pose)
+void runURKinematicsTests(const URParameters& params,
+                          double shoulder_offset,
+                          double elbow_offset,
+                          const Eigen::Isometry3d& pose)
 {
   Eigen::VectorXd seed = Eigen::VectorXd::Zero(6);
 
   // Setup test
-  tesseract_scene_graph::SceneGraph::Ptr scene_graph = getSceneGraphUR(params);
+  auto scene_graph = getSceneGraphUR(params, shoulder_offset, elbow_offset);
 
-  tesseract_kinematics::KDLFwdKinChain fwd_kin;
-  fwd_kin.init(scene_graph, "base_link", "tool0", "manip");
+  std::string manip_name = "manip";
+  std::string base_link_name = "base_link";
+  std::string tip_link_name = "tool0";
+  std::vector<std::string> joint_names{ "shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
+                                        "wrist_1_joint",      "wrist_2_joint",       "wrist_3_joint" };
 
-  auto inv_kin = std::make_shared<tesseract_kinematics::URInvKin>();
-  EXPECT_FALSE(inv_kin->checkInitialized());
-  bool status = inv_kin->init("manip",
-                              params,
-                              fwd_kin.getBaseLinkName(),
-                              fwd_kin.getTipLinkName(),
-                              fwd_kin.getJointNames(),
-                              fwd_kin.getLinkNames(),
-                              fwd_kin.getActiveLinkNames(),
-                              fwd_kin.getLimits());
+  KDLFwdKinChain fwd_kin(*scene_graph, base_link_name, tip_link_name);
+  auto inv_kin = std::make_unique<URInvKin>(params, base_link_name, tip_link_name, joint_names);
 
-  EXPECT_TRUE(status);
-  EXPECT_TRUE(inv_kin->checkInitialized());
-  EXPECT_EQ(inv_kin->getName(), "manip");
-  EXPECT_EQ(inv_kin->getSolverName(), "URInvKin");
+  EXPECT_EQ(inv_kin->getSolverName(), UR_INV_KIN_CHAIN_SOLVER_NAME);
   EXPECT_EQ(inv_kin->numJoints(), 6);
-  EXPECT_EQ(inv_kin->getBaseLinkName(), "base_link");
-  EXPECT_EQ(inv_kin->getTipLinkName(), "tool0");
-  tesseract_common::KinematicLimits target_limits = getTargetLimits(scene_graph, inv_kin->getJointNames());
+  EXPECT_EQ(inv_kin->getBaseLinkName(), base_link_name);
+  EXPECT_EQ(inv_kin->getWorkingFrame(), base_link_name);
+  EXPECT_EQ(inv_kin->getTipLinkNames().size(), 1);
+  EXPECT_EQ(inv_kin->getTipLinkNames()[0], tip_link_name);
+  EXPECT_EQ(inv_kin->getJointNames(), joint_names);
 
-  runInvKinTest(*inv_kin, fwd_kin, pose, seed);
-  runActiveLinkNamesURTest(*inv_kin);
-  runKinJointLimitsTest(inv_kin->getLimits(), target_limits);
+  runInvKinTest(*inv_kin, fwd_kin, pose, tip_link_name, seed);
 
   // Check cloned
-  tesseract_kinematics::InverseKinematics::Ptr inv_kin2 = inv_kin->clone();
+  InverseKinematics::Ptr inv_kin2 = inv_kin->clone();
   EXPECT_TRUE(inv_kin2 != nullptr);
-  EXPECT_EQ(inv_kin2->getName(), "manip");
-  EXPECT_EQ(inv_kin2->getSolverName(), "URInvKin");
+  EXPECT_EQ(inv_kin2->getSolverName(), UR_INV_KIN_CHAIN_SOLVER_NAME);
   EXPECT_EQ(inv_kin2->numJoints(), 6);
-  EXPECT_EQ(inv_kin2->getBaseLinkName(), "base_link");
-  EXPECT_EQ(inv_kin2->getTipLinkName(), "tool0");
+  EXPECT_EQ(inv_kin2->getBaseLinkName(), base_link_name);
+  EXPECT_EQ(inv_kin2->getWorkingFrame(), base_link_name);
+  EXPECT_EQ(inv_kin2->getTipLinkNames().size(), 1);
+  EXPECT_EQ(inv_kin2->getTipLinkNames()[0], tip_link_name);
+  EXPECT_EQ(inv_kin2->getJointNames(), joint_names);
 
-  runInvKinTest(*inv_kin2, fwd_kin, pose, seed);
-  runActiveLinkNamesURTest(*inv_kin2);
-  runKinJointLimitsTest(inv_kin2->getLimits(), target_limits);
-
-  // Check update
-  inv_kin2->update();
-  EXPECT_TRUE(inv_kin2 != nullptr);
-  EXPECT_EQ(inv_kin2->getName(), "manip");
-  EXPECT_EQ(inv_kin2->getSolverName(), "URInvKin");
-  EXPECT_EQ(inv_kin2->numJoints(), 6);
-  EXPECT_EQ(inv_kin2->getBaseLinkName(), "base_link");
-  EXPECT_EQ(inv_kin2->getTipLinkName(), "tool0");
-
-  runInvKinTest(*inv_kin2, fwd_kin, pose, seed);
-  runActiveLinkNamesURTest(*inv_kin2);
-  runKinJointLimitsTest(inv_kin2->getLimits(), target_limits);
-
-  // Test setJointLimits
-  runKinSetJointLimitsTest(*inv_kin);
+  runInvKinTest(*inv_kin2, fwd_kin, pose, tip_link_name, seed);
 }
 
 TEST(TesseractKinematicsUnit, UR10InvKinUnit)  // NOLINT
@@ -108,7 +88,10 @@ TEST(TesseractKinematicsUnit, UR10InvKinUnit)  // NOLINT
   pose.translation()[1] = 0;
   pose.translation()[2] = 0.75;
 
-  runURKinematicsTests(tesseract_kinematics::UR10Parameters, pose);
+  double shoulder_offset{ 0.220941 };
+  double elbow_offset{ -0.1719 };
+
+  runURKinematicsTests(UR10Parameters, shoulder_offset, elbow_offset, pose);
 }
 
 TEST(TesseractKinematicsUnit, UR5InvKinUnit)  // NOLINT
@@ -120,7 +103,10 @@ TEST(TesseractKinematicsUnit, UR5InvKinUnit)  // NOLINT
   pose.translation()[1] = 0;
   pose.translation()[2] = 0.5;
 
-  runURKinematicsTests(tesseract_kinematics::UR5Parameters, pose);
+  double shoulder_offset{ 0.13585 };
+  double elbow_offset{ -0.1197 };
+
+  runURKinematicsTests(UR5Parameters, shoulder_offset, elbow_offset, pose);
 }
 
 TEST(TesseractKinematicsUnit, UR3InvKinUnit)  // NOLINT
@@ -132,7 +118,55 @@ TEST(TesseractKinematicsUnit, UR3InvKinUnit)  // NOLINT
   pose.translation()[1] = 0;
   pose.translation()[2] = 0.25;
 
-  runURKinematicsTests(tesseract_kinematics::UR3Parameters, pose);
+  double shoulder_offset{ 0.1198 };
+  double elbow_offset{ -0.0925 };
+
+  runURKinematicsTests(UR3Parameters, shoulder_offset, elbow_offset, pose);
+}
+
+TEST(TesseractKinematicsUnit, UR10eInvKinUnit)  // NOLINT
+{
+  // Inverse target pose and seed
+  Eigen::Isometry3d pose;
+  pose.setIdentity();
+  pose.translation()[0] = 0.75;
+  pose.translation()[1] = 0;
+  pose.translation()[2] = 0.75;
+
+  double shoulder_offset{ 0.176 };
+  double elbow_offset{ -0.137 };
+
+  runURKinematicsTests(UR10eParameters, shoulder_offset, elbow_offset, pose);
+}
+
+TEST(TesseractKinematicsUnit, UR5eInvKinUnit)  // NOLINT
+{
+  // Inverse target pose and seed
+  Eigen::Isometry3d pose;
+  pose.setIdentity();
+  pose.translation()[0] = 0.5;
+  pose.translation()[1] = 0;
+  pose.translation()[2] = 0.5;
+
+  double shoulder_offset{ 0.138 };
+  double elbow_offset{ -0.131 };
+
+  runURKinematicsTests(UR5eParameters, shoulder_offset, elbow_offset, pose);
+}
+
+TEST(TesseractKinematicsUnit, UR3eInvKinUnit)  // NOLINT
+{
+  // Inverse target pose and seed
+  Eigen::Isometry3d pose;
+  pose.setIdentity();
+  pose.translation()[0] = 0.25;
+  pose.translation()[1] = 0;
+  pose.translation()[2] = 0.25;
+
+  double shoulder_offset{ 0.120 };
+  double elbow_offset{ -0.093 };
+
+  runURKinematicsTests(UR3eParameters, shoulder_offset, elbow_offset, pose);
 }
 
 int main(int argc, char** argv)

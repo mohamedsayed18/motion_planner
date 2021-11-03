@@ -35,11 +35,14 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 namespace tinyxml2
 {
 class XMLElement;
-}
-namespace tesseract_scene_graph
+class XMLDocument;
+}  // namespace tinyxml2
+
+namespace tesseract_common
 {
 class ResourceLocator;
 }
+
 namespace tesseract_geometry
 {
 class ConvexMesh;
@@ -57,9 +60,14 @@ namespace tesseract_urdf
  */
 std::vector<std::shared_ptr<tesseract_geometry::ConvexMesh>>
 parseConvexMesh(const tinyxml2::XMLElement* xml_element,
-                const std::shared_ptr<tesseract_scene_graph::ResourceLocator>& locator,
+                const tesseract_common::ResourceLocator& locator,
                 bool visual,
                 int version);
+
+tinyxml2::XMLElement* writeConvexMesh(const std::shared_ptr<const tesseract_geometry::ConvexMesh>& mesh,
+                                      tinyxml2::XMLDocument& doc,
+                                      const std::string& directory,
+                                      const std::string& filename);
 
 }  // namespace tesseract_urdf
 

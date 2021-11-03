@@ -34,7 +34,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_urdf/octomap.h>
 #include <tesseract_urdf/octree.h>
 #include <tesseract_scene_graph/utils.h>
-#include <tesseract_scene_graph/resource_locator.h>
+#include <tesseract_common/resource_locator.h>
 #include <tesseract_geometry/impl/octree.h>
 
 #ifdef TESSERACT_PARSE_POINT_CLOUDS
@@ -42,7 +42,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #endif
 
 tesseract_geometry::Octree::Ptr tesseract_urdf::parseOctomap(const tinyxml2::XMLElement* xml_element,
-                                                             const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+                                                             const tesseract_common::ResourceLocator& locator,
                                                              const bool /*visual*/,
                                                              int version)
 {
@@ -50,7 +50,7 @@ tesseract_geometry::Octree::Ptr tesseract_urdf::parseOctomap(const tinyxml2::XML
   if (tesseract_common::QueryStringAttribute(xml_element, "shape_type", shape_type) != tinyxml2::XML_SUCCESS)
     std::throw_with_nested(std::runtime_error("Octomap: Missing or failed parsing attribute 'shape_type'!"));
 
-  tesseract_geometry::Octree::SubType sub_type;
+  tesseract_geometry::Octree::SubType sub_type{ tesseract_geometry::Octree::SubType::BOX };
   if (shape_type == "box")
     sub_type = tesseract_geometry::Octree::SubType::BOX;
   else if (shape_type == "sphere_inside")
@@ -93,4 +93,41 @@ tesseract_geometry::Octree::Ptr tesseract_urdf::parseOctomap(const tinyxml2::XML
 #endif
 
   std::throw_with_nested(std::runtime_error("Octomap: Missing element 'octree' or 'point_cloud', must define one!"));
+}
+
+tinyxml2::XMLElement* tesseract_urdf::writeOctomap(const std::shared_ptr<const tesseract_geometry::Octree>& octree,
+                                                   tinyxml2::XMLDocument& doc,
+                                                   const std::string& directory,
+                                                   const std::string& filename)
+{
+  if (octree == nullptr)
+    std::throw_with_nested(std::runtime_error("Octree is nullptr and cannot be converted to XML"));
+  tinyxml2::XMLElement* xml_element = doc.NewElement("octree");
+
+  std::string type_string;
+  if (octree->getSubType() == tesseract_geometry::Octree::SubType::BOX)
+    type_string = "box";
+  else if (octree->getSubType() == tesseract_geometry::Octree::SubType::SPHERE_INSIDE)
+    type_string = "sphere_inside";
+  else if (octree->getSubType() == tesseract_geometry::Octree::SubType::SPHERE_OUTSIDE)
+    type_string = "sphere_outside";
+  else
+    std::throw_with_nested(std::runtime_error("Octree subtype is invalid and cannot be converted to XML"));
+  xml_element->SetAttribute("shape_type", type_string.c_str());
+
+  xml_element->SetAttribute("prune", octree->getPruned());
+
+  try
+  {
+    tinyxml2::XMLElement* xml_octree = writeOctree(octree, doc, directory, filename);
+    xml_element->InsertEndChild(xml_octree);
+  }
+  catch (...)
+  {
+    std::throw_with_nested(std::runtime_error("Octomap: Could not write octree to file"));
+  }
+
+  // @dmerz - optionally write to .pcd file?
+
+  return xml_element;
 }

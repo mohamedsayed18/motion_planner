@@ -35,7 +35,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 tesseract_geometry::Capsule::Ptr tesseract_urdf::parseCapsule(const tinyxml2::XMLElement* xml_element, int /*version*/)
 {
-  double r, l;
+  double r{ 0 }, l{ 0 };
   if (xml_element->QueryDoubleAttribute("length", &(l)) != tinyxml2::XML_SUCCESS || !(l > 0))
     std::throw_with_nested(std::runtime_error("Capsule: Missing or failed parsing attribute 'length'!"));
 
@@ -43,4 +43,15 @@ tesseract_geometry::Capsule::Ptr tesseract_urdf::parseCapsule(const tinyxml2::XM
     std::throw_with_nested(std::runtime_error("Capsule: Missing or failed parsing attribute 'radius'!"));
 
   return std::make_shared<tesseract_geometry::Capsule>(r, l);
+}
+
+tinyxml2::XMLElement* tesseract_urdf::writeCapsule(const std::shared_ptr<const tesseract_geometry::Capsule>& capsule,
+                                                   tinyxml2::XMLDocument& doc)
+{
+  if (capsule == nullptr)
+    std::throw_with_nested(std::runtime_error("Capsule is nullptr and cannot be written to XML file"));
+  tinyxml2::XMLElement* xml_element = doc.NewElement("capsule");
+  xml_element->SetAttribute("length", capsule->getLength());
+  xml_element->SetAttribute("radius", capsule->getRadius());
+  return xml_element;
 }

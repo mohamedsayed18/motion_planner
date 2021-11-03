@@ -36,8 +36,10 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 namespace tinyxml2
 {
 class XMLElement;
-}
-namespace tesseract_scene_graph
+class XMLDocument;
+}  // namespace tinyxml2
+
+namespace tesseract_common
 {
 class ResourceLocator;
 }
@@ -52,12 +54,24 @@ namespace tesseract_urdf
  * @param prune Indicate if the octree should be pruned
  * @return A Tesseract Geometry Octree
  */
-std::shared_ptr<tesseract_geometry::Octree>
-parseOctree(const tinyxml2::XMLElement* xml_element,
-            const std::shared_ptr<tesseract_scene_graph::ResourceLocator>& locator,
-            tesseract_geometry::Octree::SubType shape_type,
-            bool prune,
-            int version);
+std::shared_ptr<tesseract_geometry::Octree> parseOctree(const tinyxml2::XMLElement* xml_element,
+                                                        const tesseract_common::ResourceLocator& locator,
+                                                        tesseract_geometry::Octree::SubType shape_type,
+                                                        bool prune,
+                                                        int version);
+
+/**
+ * @brief writeOctree Write octree out to file, and generate appropriate xml
+ * @param octree The geometry element containing octree data
+ * @param doc The XML document to which to add the xml data
+ * @param directory Working directory, with trailing `/` (e.g. "/tmp/")
+ * @param filename Desired filename relative to the working directory ("octree.ot" or "collision/octree.ot")
+ * @return An XML element containing information on the saved file.
+ */
+tinyxml2::XMLElement* writeOctree(const std::shared_ptr<const tesseract_geometry::Octree>& octree,
+                                  tinyxml2::XMLDocument& doc,
+                                  const std::string& directory,
+                                  const std::string& filename);
 
 }  // namespace tesseract_urdf
 

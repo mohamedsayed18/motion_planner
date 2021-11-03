@@ -113,24 +113,32 @@ using Graph = boost::
 
 #endif  // SWIG
 
+/** @brief Holds the shortest path information.*/
+struct ShortestPath
+{
+  /** @brief a list of links along the shortest path */
+  std::vector<std::string> links;
+
+  /** @brief A list of joints along the shortest path */
+  std::vector<std::string> joints;
+
+  /** @brief A list of active joints along the shortest path */
+  std::vector<std::string> active_joints;
+};
+
 class SceneGraph
 #ifndef SWIG
   : public Graph
 #endif  // SWIG
 {
 public:
-  /**
-   * @brief Holds the shortest path information.
-   *
-   * The first vector is a list of links along the shortest path
-   * The second vector is a list of joints along the shortest path
-   */
-  using Path = std::pair<std::vector<std::string>, std::vector<std::string>>;
   using Vertex = SceneGraph::vertex_descriptor;
   using Edge = SceneGraph::edge_descriptor;
 
   using Ptr = std::shared_ptr<SceneGraph>;
   using ConstPtr = std::shared_ptr<const SceneGraph>;
+  using UPtr = std::unique_ptr<SceneGraph>;
+  using ConstUPtr = std::unique_ptr<const SceneGraph>;
 
   SceneGraph(const std::string& name = "");
   ~SceneGraph() = default;
@@ -145,7 +153,7 @@ public:
    * @brief Clone the scene graph
    * @return The cloned scene graph
    */
-  SceneGraph::Ptr clone() const;
+  SceneGraph::UPtr clone() const;
 
   /** @brief Clear the scene graph */
   void clear();
@@ -211,14 +219,29 @@ public:
   std::vector<Link::ConstPtr> getLinks() const;
 
   /**
+   * @brief Get a vector leaf links in the scene graph
+   * @return A vector of links
+   */
+  std::vector<Link::ConstPtr> getLeafLinks() const;
+
+  /**
    * @brief Removes a link from the graph
    *
    * Note: this will remove all inbound and outbound edges
    *
    * @param name Name of the link to be removed
+   * @param recursive If true all children are removed if it only has a single joint
    * @return Return False if a link does not exists, otherwise true
    */
-  bool removeLink(const std::string& name);
+  bool removeLink(const std::string& name, bool recursive = false);
+
+  /**
+   * @brief Move link defined by provided joint
+   * This deletes all inbound joints on the parent link defined by the joint
+   * @param joint The joint defining the link move
+   * @return Returns true if successful, otherwise false.
+   */
+  bool moveLink(const Joint& joint);
 
   /**
    * @brief Set a links visibility
@@ -234,13 +257,13 @@ public:
 
   /**
    * @brief Set whether a link should be considered during collision checking
-   * @param enabled True if should be condisdered during collision checking, otherwise false
+   * @param enabled True if should be considered during collision checking, otherwise false
    */
   void setLinkCollisionEnabled(const std::string& name, bool enabled);
 
   /**
    * @brief Get whether a link should be considered during collision checking
-   * @return True if should be condisdered during collision checking, otherwise false
+   * @return True if should be considered during collision checking, otherwise false
    */
   bool getLinkCollisionEnabled(const std::string& name) const;
 
@@ -262,9 +285,10 @@ public:
   /**
    * @brief Removes a joint from the graph
    * @param name Name of the joint to be removed
+   * @param recursive If true all children are removed if this this is the only joint of the child link
    * @return Return False if a joint does not exists, otherwise true
    */
-  bool removeJoint(const std::string& name);
+  bool removeJoint(const std::string& name, bool recursive = false);
 
   /**
    * @brief Move joint to new parent link
@@ -275,10 +299,16 @@ public:
   bool moveJoint(const std::string& name, const std::string& parent_link);
 
   /**
-   * @brief Get a vector joints in the scene graph
+   * @brief Get a vector of joints in the scene graph
    * @return A vector of joints
    */
   std::vector<Joint::ConstPtr> getJoints() const;
+
+  /**
+   * @brief Get a vector of active joints in the scene graph
+   * @return A vector of active joints
+   */
+  std::vector<Joint::ConstPtr> getActiveJoints() const;
 
   /** @brief Changes the "origin" transform of the joint and recomputes the associated edge
    * @param name Name of the joint to be changed
@@ -296,6 +326,30 @@ public:
   bool changeJointLimits(const std::string& name, const JointLimits& limits);
 
   /**
+   * @brief Changes the position limits associated with a joint
+   * @param joint_name Name of the joint to be updated
+   * @param limits New position limits to be set as the joint limits
+   * @returnTrue if successful.
+   */
+  bool changeJointPositionLimits(const std::string& name, double lower, double upper);
+
+  /**
+   * @brief Changes the velocity limits associated with a joint
+   * @param joint_name Name of the joint to be updated
+   * @param limits New velocity limits to be set as the joint limits
+   * @return
+   */
+  bool changeJointVelocityLimits(const std::string& name, double limit);
+
+  /**
+   * @brief Changes the acceleration limits associated with a joint
+   * @param joint_name Name of the joint to be updated
+   * @param limits New acceleration limits to be set as the joint limits
+   * @return
+   */
+  bool changeJointAccelerationLimits(const std::string& name, double limit);
+
+  /**
    * @brief Gets the limits of the joint specified by name
    * @param name Name of the joint which limits will be retrieved
    * @return Limits of the joint. Returns nullptr is joint is not found.
@@ -306,7 +360,7 @@ public:
    * @brief Disable collision between two collision objects
    * @param link_name1 Collision object name
    * @param link_name2 Collision object name
-   * @param reason The reason for disabling collison
+   * @param reason The reason for disabling collision
    */
   void addAllowedCollision(const std::string& link_name1, const std::string& link_name2, const std::string& reason);
 
@@ -364,7 +418,7 @@ public:
    * @brief Get inbound joints for a link
    *
    * The inbound joints are all joints that have the
-   * link identified as the parent link
+   * link identified as the child link
    *
    * @param link_name The name of the link
    * @return Vector of joints
@@ -375,7 +429,7 @@ public:
    * @brief Get outbound joints for a link
    *
    * The outbound joints are all joins that have the
-   * link identified as the child link
+   * link identified as the parent link
    *
    * @param link_name The name of the link
    * @return Vector of joints
@@ -422,11 +476,27 @@ public:
   std::vector<std::string> getLinkChildrenNames(const std::string& name) const;
 
   /**
-   * @brief Get all children for a given link name
-   * @param name Name of Link
+   * @brief Get all children link names for a given joint name
+   * @param name Name of joint
    * @return A vector of child link names
    */
   std::vector<std::string> getJointChildrenNames(const std::string& name) const;
+
+  /**
+   * @brief Create mapping between links in the scene to the provided links if they are directly affected if the link
+   * moves
+   * @param link_names The links to map other links to
+   * @return A map of affected links to on of the provided link names.
+   */
+  std::unordered_map<std::string, std::string> getAdjacencyMap(const std::vector<std::string>& link_names) const;
+
+  /**
+   * @brief Get all children link names for the given joint names
+   * @todo Need to create custom visitor so already process joint_names do not get processed again.
+   * @param names Name of joints
+   * @return A vector of child link names
+   */
+  std::vector<std::string> getJointChildrenNames(const std::vector<std::string>& names) const;
 
   /**
    * @brief Saves Graph as Graph Description Language (DOT)
@@ -440,7 +510,7 @@ public:
    * @param tip The tip link
    * @return The shortest path between the two links
    */
-  Path getShortestPath(const std::string& root, const std::string& tip) const;
+  ShortestPath getShortestPath(const std::string& root, const std::string& tip) const;
 
 #ifndef SWIG
   /**
@@ -460,11 +530,11 @@ public:
   /**
    * @brief Merge a graph into the current graph
    * @param scene_graph Const ref to the graph to be merged (said graph will be copied)
-   * @param prefix string Will be prepended to every link and joint of the merged graph
+   * @param prefix string Will prepend to every link and joint of the merged graph
    * @return Return False if any link or joint name collides with current environment, otherwise True
-   * Merge a subgraph into the current environment, considering that the root of the merged graph is attached to the
-   * root of the environment by a fixed joint and no displacement. Every joint and link of the subgraph will be copied
-   * into the environment graph. The prefix argument is meant to allow adding multiple copies of the same subgraph with
+   * Merge a sub-graph into the current environment, considering that the root of the merged graph is attached to the
+   * root of the environment by a fixed joint and no displacement. Every joint and link of the sub-graph will be copied
+   * into the environment graph. The prefix argument is meant to allow adding multiple copies of the same sub-graph with
    * different names
    */
   bool insertSceneGraph(const tesseract_scene_graph::SceneGraph& scene_graph, const std::string& prefix = "");
@@ -473,11 +543,11 @@ public:
    * @brief Merge a graph into the current environment
    * @param scene_graph Const ref to the graph to be merged (said graph will be copied)
    * @param joint The joint that connects current environment with the inserted graph
-   * @param prefix string Will be prepended to every link and joint of the merged graph
+   * @param prefix string Will prepend to every link and joint of the merged graph
    * @return Return False if any link or joint name collides with current environment, otherwise True
-   * Merge a subgraph into the current environment. Every joint and link of the subgraph will be copied into the
-   * environment graph. The prefix argument is meant to allow adding multiple copies of the same subgraph with different
-   * names
+   * Merge a sub-graph into the current environment. Every joint and link of the sub-graph will be copied into the
+   * environment graph. The prefix argument is meant to allow adding multiple copies of the same sub-graph with
+   * different names
    */
   bool insertSceneGraph(const tesseract_scene_graph::SceneGraph& scene_graph,
                         const tesseract_scene_graph::Joint& joint,
@@ -493,7 +563,7 @@ protected:
    * @param replace_allowed If true and the link exist it will be replaced
    * @return Return False if a link with the same name already exists and replace is not allowed, otherwise true
    */
-  bool addLinkHelper(Link::Ptr link_ptr, bool replace_allowed = false);
+  bool addLinkHelper(const Link::Ptr& link_ptr, bool replace_allowed = false);
 
   /**
    * @brief Adds joint to the graph
@@ -501,7 +571,7 @@ protected:
    * @return Return False if parent or child link does not exists and if joint name already exists in the graph,
    * otherwise true
    */
-  bool addJointHelper(Joint::Ptr joint_ptr);
+  bool addJointHelper(const Joint::Ptr& joint_ptr);
 
 private:
   std::unordered_map<std::string, std::pair<Link::Ptr, Vertex>> link_map_;
@@ -527,7 +597,7 @@ private:
     tree_detector(bool& tree) : tree_(tree) {}
 
     template <class u, class g>
-    void discover_vertex(u vertex, g graph)
+    void discover_vertex(u vertex, const g& graph)
     {
       auto num_in_edges = static_cast<int>(boost::in_degree(vertex, graph));
 
@@ -556,7 +626,7 @@ private:
     }
 
     template <class e, class g>
-    void back_edge(e, g&)
+    void back_edge(e, const g&)
     {
       tree_ = false;
     }
@@ -571,13 +641,51 @@ private:
     children_detector(std::vector<std::string>& children) : children_(children) {}
 
     template <class u, class g>
-    void discover_vertex(u vertex, g graph)
+    void discover_vertex(u vertex, const g& graph)
     {
       children_.push_back(boost::get(boost::vertex_link, graph)[vertex]->getName());
     }
 
   protected:
     std::vector<std::string>& children_;
+  };
+
+  struct adjacency_detector : public boost::default_bfs_visitor
+  {
+    adjacency_detector(std::unordered_map<std::string, std::string>& adjacency_map,
+                       std::map<Vertex, boost::default_color_type>& color_map,
+                       const std::string& base_link_name,
+                       const std::vector<std::string>& terminate_on_links)
+      : adjacency_map_(adjacency_map)
+      , color_map_(color_map)
+      , base_link_name_(base_link_name)
+      , terminate_on_links_(terminate_on_links)
+    {
+    }
+
+    template <class u, class g>
+    void examine_vertex(u vertex, const g& graph)
+    {
+      for (auto vd : boost::make_iterator_range(adjacent_vertices(vertex, graph)))
+      {
+        std::string adj_link = boost::get(boost::vertex_link, graph)[vd]->getName();
+        if (std::find(terminate_on_links_.begin(), terminate_on_links_.end(), adj_link) != terminate_on_links_.end())
+          color_map_[vd] = boost::default_color_type::black_color;
+      }
+    }
+
+    template <class u, class g>
+    void discover_vertex(u vertex, const g& graph)
+    {
+      std::string adj_link = boost::get(boost::vertex_link, graph)[vertex]->getName();
+      adjacency_map_[adj_link] = base_link_name_;
+    }
+
+  protected:
+    std::unordered_map<std::string, std::string>& adjacency_map_;
+    std::map<Vertex, boost::default_color_type>& color_map_;
+    const std::string& base_link_name_;
+    const std::vector<std::string>& terminate_on_links_;
   };
 
   /**
@@ -615,16 +723,19 @@ private:
   }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const SceneGraph::Path& path)
+inline std::ostream& operator<<(std::ostream& os, const ShortestPath& path)
 {
   os << "Links:" << std::endl;
-  for (const auto& l : path.first)
+  for (const auto& l : path.links)
     os << "  " << l << std::endl;
 
   os << "Joints:" << std::endl;
-  for (const auto& j : path.second)
+  for (const auto& j : path.joints)
     os << "  " << j << std::endl;
 
+  os << "Active Joints:" << std::endl;
+  for (const auto& j : path.active_joints)
+    os << "  " << j << std::endl;
   return os;
 }
 

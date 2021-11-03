@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="rviz" default="true" />
+  <arg name="application" default="false" />
+  <arg name="use_rail" default="false" />
+
+  <!-- Tesseract Monitor Parameters -->
+  <arg name="robot_description" default="robot_description"/>
+  <arg name="discrete_plugin" default="BulletDiscreteBVHManager"/>
+  <arg name="continuous_plugin" default="BulletCastBVHManager"/>
+  <arg name="joint_state_topic" default=""/>
+  <arg name="monitor_namespace" default="tesseract_workcell_environment"/>
+
+  <param name="use_rail" type="bool" value="$(arg use_rail)" />
+
+  <!-- Launch URDF and SRDF -->
+  <include file="$(find twc_support)/launch/load_workcell_rail.launch" />
+
+  <!-- Launch Application Base Nodes -->
+  <include file="$(find twc_application)/launch/application_base.launch">
+    <arg name="robot_description" value="$(arg robot_description)"/>
+    <arg name="discrete_plugin" value="$(arg discrete_plugin)"/>
+    <arg name="continuous_plugin" value="$(arg continuous_plugin)"/>
+    <arg name="joint_state_topic" value="$(arg joint_state_topic)"/>
+    <arg name="monitor_namespace" value="$(arg monitor_namespace)"/>
+  </include>
+
+  <!-- Launch RViz -->
+  <node if="$(arg rviz)" name="rviz" pkg="rviz" type="rviz" args="-d $(find twc_application)/config/twc.rviz" output="screen" required="true"/>
+
+  <!-- Launch GUI to drive joints   -->
+  <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <rosparam>
+      zeros:
+        rail_joint_1: 2.25
+    </rosparam>
+  </node>
+
+  <!-- Launch Application Node -->
+  <node if="$(arg application)" name="twc_application_node" pkg="twc_application" type="twc_application_node" required="true">
+    <param name="toolpath" type="str" value="$(find twc_application)/config/job_path.yaml"/>
+  </node>
+</launch>

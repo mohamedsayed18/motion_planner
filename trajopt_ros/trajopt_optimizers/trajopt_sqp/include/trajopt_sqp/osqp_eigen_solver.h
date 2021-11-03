@@ -51,7 +51,7 @@ public:
 
   Eigen::VectorXd getSolution() override;
 
-  bool updateHessianMatrix(const Hessian& hessian) override;
+  bool updateHessianMatrix(const SparseMatrix& hessian) override;
 
   bool updateGradient(const Eigen::Ref<const Eigen::VectorXd>& gradient) override;
 
@@ -62,7 +62,7 @@ public:
   bool updateBounds(const Eigen::Ref<const Eigen::VectorXd>& lowerBound,
                     const Eigen::Ref<const Eigen::VectorXd>& upperBound) override;
 
-  bool updateLinearConstraintsMatrix(const Jacobian& linearConstraintsMatrix) override;
+  bool updateLinearConstraintsMatrix(const SparseMatrix& linearConstraintsMatrix) override;
 
   QPSolverStatus getSolverStatus() const override { return solver_status_; };
 
@@ -74,8 +74,8 @@ private:
   Eigen::VectorXd bounds_lower_;
   Eigen::VectorXd bounds_upper_;
   Eigen::VectorXd gradient_;
-  Eigen::Index num_vars_;
-  Eigen::Index num_cnts_;
+  Eigen::Index num_vars_{ 0 };
+  Eigen::Index num_cnts_{ 0 };
 
   QPSolverStatus solver_status_{ QPSolverStatus::UNITIALIZED };
 };

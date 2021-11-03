@@ -32,7 +32,7 @@ TRAJOPT_IGNORE_WARNINGS_PUSH
 #include <tesseract_visualization/visualization.h>
 TRAJOPT_IGNORE_WARNINGS_POP
 
-#include <trajopt_ifopt/constraints/collision_constraint.h>
+#include <trajopt_ifopt/constraints/collision/discrete_collision_constraint.h>
 #include <trajopt_sqp/sqp_callback.h>
 #include <trajopt_sqp/trust_region_sqp_solver.h>
 #include <trajopt_sqp/types.h>
@@ -47,16 +47,16 @@ public:
 
   CollisionPlottingCallback(tesseract_visualization::Visualization::Ptr plotter);
 
-  void plot(const ifopt::Problem& nlp);
+  void plot(const QPProblem& problem);
 
-  void addConstraintSet(const trajopt::CollisionConstraintIfopt::ConstPtr& collision_constraint);
+  void addConstraintSet(const trajopt_ifopt::DiscreteCollisionConstraint::ConstPtr& collision_constraint);
 
-  void addConstraintSet(const std::vector<trajopt::CollisionConstraintIfopt::ConstPtr>& collision_constraints);
+  void addConstraintSet(const std::vector<trajopt_ifopt::DiscreteCollisionConstraint::ConstPtr>& collision_constraints);
 
-  bool execute(const ifopt::Problem& nlp, const trajopt_sqp::SQPResults& sqp_results) override;
+  bool execute(const QPProblem& problem, const trajopt_sqp::SQPResults& sqp_results) override;
 
 protected:
-  std::vector<trajopt::CollisionConstraintIfopt::ConstPtr> collision_constraints_;
+  std::vector<trajopt_ifopt::DiscreteCollisionConstraint::ConstPtr> collision_constraints_;
   tesseract_visualization::Visualization::Ptr plotter_;
 };
 }  // namespace trajopt_sqp

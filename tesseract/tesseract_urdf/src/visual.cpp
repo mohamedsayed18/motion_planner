@@ -37,12 +37,12 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_urdf/material.h>
 #include <tesseract_urdf/geometry.h>
 #include <tesseract_scene_graph/utils.h>
-#include <tesseract_scene_graph/resource_locator.h>
 #include <tesseract_scene_graph/link.h>
+#include <tesseract_common/resource_locator.h>
 
 std::vector<tesseract_scene_graph::Visual::Ptr>
 tesseract_urdf::parseVisual(const tinyxml2::XMLElement* xml_element,
-                            const tesseract_scene_graph::ResourceLocator::Ptr& locator,
+                            const tesseract_common::ResourceLocator& locator,
                             std::unordered_map<std::string, tesseract_scene_graph::Material::Ptr>& available_materials,
                             int version)
 {
@@ -125,4 +125,43 @@ tesseract_urdf::parseVisual(const tinyxml2::XMLElement* xml_element,
   }
 
   return visuals;
+}
+
+tinyxml2::XMLElement* tesseract_urdf::writeVisual(const std::shared_ptr<const tesseract_scene_graph::Visual>& visual,
+                                                  tinyxml2::XMLDocument& doc,
+                                                  const std::string& directory,
+                                                  const std::string& link_name,
+                                                  const int id = -1)
+{
+  if (visual == nullptr)
+    std::throw_with_nested(std::runtime_error("Visual is nullptr and cannot be converted to XML"));
+
+  tinyxml2::XMLElement* xml_element = doc.NewElement("visual");
+
+  if (!visual->name.empty())
+    xml_element->SetAttribute("name", visual->name.c_str());
+
+  tinyxml2::XMLElement* xml_origin = writeOrigin(visual->origin, doc);
+  xml_element->InsertEndChild(xml_origin);
+
+  if (visual->material != nullptr)
+  {
+    tinyxml2::XMLElement* xml_material = writeMaterial(visual->material, doc);
+    xml_element->InsertEndChild(xml_material);
+  }
+
+  try
+  {
+    std::string filename = "visual/" + link_name + "_visual";
+    if (id >= 0)
+      filename += "_" + std::to_string(id);
+    tinyxml2::XMLElement* xml_geometry = writeGeometry(visual->geometry, doc, directory, filename);
+    xml_element->InsertEndChild(xml_geometry);
+  }
+  catch (...)
+  {
+    std::throw_with_nested(std::runtime_error("Could not write geometry for visual '" + visual->name + "'!"));
+  }
+
+  return xml_element;
 }

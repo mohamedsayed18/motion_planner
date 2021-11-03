@@ -42,7 +42,8 @@ bool DEBUG = false;
 
 CompositeInstruction getProgram()
 {
-  CompositeInstruction program("raster_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator"));
+  CompositeInstruction program(
+      "raster_program", CompositeInstructionOrder::ORDERED, ManipulatorInfo("manipulator", "world", "tool0"));
 
   // Start Joint Position for the program
   std::vector<std::string> joint_names = { "joint_1", "joint_2", "joint_3", "joint_4", "joint_5", "joint_6" };
@@ -185,14 +186,14 @@ TEST(TesseractCommandLanguageSerializeUnit, serializationCompositeInstruction)  
   {  // Archive program to file
     std::string file_path = tesseract_common::getTempPath() + "composite_instruction_boost.xml";
     EXPECT_TRUE(Serialization::toArchiveFileXML<Instruction>(program, file_path));
-    Instruction nprogram = Serialization::fromArchiveFileXML<Instruction>(file_path);
+    auto nprogram = Serialization::fromArchiveFileXML<Instruction>(file_path);
     EXPECT_TRUE(program == nprogram);
   }
 
   {  // Archive program to string
     std::string program_string = Serialization::toArchiveStringXML<Instruction>(program, "program");
     EXPECT_FALSE(program_string.empty());
-    Instruction nprogram = Serialization::fromArchiveStringXML<Instruction>(program_string);
+    auto nprogram = Serialization::fromArchiveStringXML<Instruction>(program_string);
     EXPECT_TRUE(program == nprogram);
   }
 }

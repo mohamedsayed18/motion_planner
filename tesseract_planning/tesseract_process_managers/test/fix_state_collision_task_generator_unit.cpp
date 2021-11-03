@@ -4,8 +4,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_common/types.h>
-#include <tesseract_environment/core/environment.h>
-#include <tesseract_environment/ofkt/ofkt_state_solver.h>
+#include <tesseract_environment/environment.h>
 #include <tesseract_process_managers/task_generators/fix_state_collision_task_generator.h>
 #include <tesseract_command_language/utils/utils.h>
 #include <tesseract_command_language/joint_waypoint.h>
@@ -54,20 +53,19 @@ protected:
 
   void SetUp() override
   {
-    tesseract_scene_graph::ResourceLocator::Ptr locator =
-        std::make_shared<tesseract_scene_graph::SimpleResourceLocator>(locateResource);
+    auto locator = std::make_shared<tesseract_common::SimpleResourceLocator>(locateResource);
     Environment::Ptr env = std::make_shared<Environment>();
 
     tesseract_common::fs::path urdf_path(std::string(TESSERACT_SUPPORT_DIR) + "/urdf/boxbot.urdf");
     tesseract_common::fs::path srdf_path(std::string(TESSERACT_SUPPORT_DIR) + "/urdf/boxbot.srdf");
-    EXPECT_TRUE(env->init<OFKTStateSolver>(urdf_path, srdf_path, locator));
+    EXPECT_TRUE(env->init(urdf_path, srdf_path, locator));
     env_ = env;
 
     manip_.manipulator = "manipulator";
   }
 };
 
-TEST_F(FixStateCollisionTaskGeneratorUnit, StateInCollisionTest)
+TEST_F(FixStateCollisionTaskGeneratorUnit, StateInCollisionTest)  // NOLINT
 {
   CompositeInstruction program = freespaceExampleProgramABB();
   const Instruction program_instruction{ program };
@@ -106,7 +104,7 @@ TEST_F(FixStateCollisionTaskGeneratorUnit, StateInCollisionTest)
   EXPECT_TRUE(contacts.empty());
 }
 
-TEST_F(FixStateCollisionTaskGeneratorUnit, WaypointInCollisionTest)
+TEST_F(FixStateCollisionTaskGeneratorUnit, WaypointInCollisionTest)  // NOLINT
 {
   CompositeInstruction program = freespaceExampleProgramABB();
   const Instruction program_instruction{ program };
@@ -153,7 +151,7 @@ TEST_F(FixStateCollisionTaskGeneratorUnit, WaypointInCollisionTest)
   EXPECT_TRUE(contacts.empty());
 }
 
-TEST_F(FixStateCollisionTaskGeneratorUnit, MoveWaypointFromCollisionRandomSamplerTest)
+TEST_F(FixStateCollisionTaskGeneratorUnit, MoveWaypointFromCollisionRandomSamplerTest)  // NOLINT
 {
   CompositeInstruction program = freespaceExampleProgramABB();
   const Instruction program_instruction{ program };
@@ -185,7 +183,7 @@ TEST_F(FixStateCollisionTaskGeneratorUnit, MoveWaypointFromCollisionRandomSample
   EXPECT_FALSE(WaypointInCollision(wp, input, profile, contacts));
 }
 
-TEST_F(FixStateCollisionTaskGeneratorUnit, MoveWaypointFromCollisionTrajoptTest)
+TEST_F(FixStateCollisionTaskGeneratorUnit, MoveWaypointFromCollisionTrajoptTest)  // NOLINT
 {
   CompositeInstruction program = freespaceExampleProgramABB();
   const Instruction program_instruction{ program };

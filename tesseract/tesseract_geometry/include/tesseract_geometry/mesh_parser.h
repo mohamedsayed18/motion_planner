@@ -55,7 +55,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 #include <console_bridge/console.h>
 
 #include <tesseract_common/types.h>
-#include <tesseract_common/resource.h>
+#include <tesseract_common/resource_locator.h>
 
 #include <regex>
 #include <boost/filesystem/path.hpp>
@@ -164,12 +164,12 @@ std::vector<std::shared_ptr<T>> extractMeshData(const aiScene* scene,
         {
           // Use PBR Metallic material properties if available
           base_color = Eigen::Vector4d(pbr_base_color.r, pbr_base_color.g, pbr_base_color.b, pbr_base_color.a);
-          float metallicFactor;
+          float metallicFactor{ 0 };
           if (mat->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLIC_FACTOR, metallicFactor) == AI_SUCCESS)
           {
             metallic = metallicFactor;
           }
-          float roughnessFactor;
+          float roughnessFactor{ 0.5 };
           if (mat->Get(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_ROUGHNESS_FACTOR, roughnessFactor) == AI_SUCCESS)
           {
             roughness = roughnessFactor;
@@ -205,8 +205,8 @@ std::vector<std::shared_ptr<T>> extractMeshData(const aiScene* scene,
           if (a->HasTextureCoords(i))
           {
             aiString texName;
-            aiTextureMapping mapping;
-            unsigned int uvIndex;
+            aiTextureMapping mapping{ aiTextureMapping_OTHER };
+            unsigned int uvIndex{ 0 };
             if (mat->GetTexture(aiTextureType_DIFFUSE, i, &texName, &mapping, &uvIndex) == AI_SUCCESS)
             {
               tesseract_common::Resource::Ptr texture_image;
@@ -218,13 +218,13 @@ std::vector<std::shared_ptr<T>> extractMeshData(const aiScene* scene,
                 int tex_index = std::atoi(texNamec + 1);
                 if (0 > tex_index || scene->mNumTextures <= static_cast<unsigned>(tex_index))
                   continue;
-                auto texture_data = scene->mTextures[tex_index];
+                auto* texture_data = scene->mTextures[tex_index];
                 // returned pointer is not null, read texture from memory
                 std::string file_type = texture_data->achFormatHint;
                 if (file_type == "jpg" || file_type == "png")
                 {
                   texture_image = std::make_shared<tesseract_common::BytesResource>(
-                      "data://", (const uint8_t*)texture_data->pcData, texture_data->mWidth);
+                      "data://", (const uint8_t*)texture_data->pcData, texture_data->mWidth);  // NOLINT
                 }
                 else
                 {
@@ -239,7 +239,7 @@ std::vector<std::shared_ptr<T>> extractMeshData(const aiScene* scene,
                   continue;
                 }
                 std::string texName_str(texName.C_Str());
-                auto tex_resource = resource->locateSubResource(texName_str);
+                auto tex_resource = resource->locateResource(texName_str);
                 if (!tex_resource)
                 {
                   continue;

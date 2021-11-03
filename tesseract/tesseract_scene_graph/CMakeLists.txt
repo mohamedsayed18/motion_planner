@@ -40,7 +40,12 @@ set(COVERAGE_EXCLUDE
     /*/gtest/*)
 add_code_coverage_all_targets(EXCLUDE ${COVERAGE_EXCLUDE} ENABLE ${TESSERACT_ENABLE_CODE_COVERAGE})
 
-add_library(${PROJECT_NAME} src/graph.cpp src/resource_locator.cpp src/utils.cpp)
+add_library(
+  ${PROJECT_NAME}
+  src/graph.cpp
+  src/utils.cpp
+  src/kdl_parser.cpp
+  src/scene_state.cpp)
 target_link_libraries(
   ${PROJECT_NAME}
   PUBLIC Boost::boost
@@ -58,7 +63,7 @@ target_compile_definitions(
          Boost_USE_STATIC_LIBS=OFF
          Boost_USE_MULTITHREADED=ON
          Boost_USE_STATIC_RUNTIME=OFF)
-target_clang_tidy(${PROJECT_NAME} ARGUMENTS ${TESSERACT_CLANG_TIDY_ARGS} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
+target_clang_tidy(${PROJECT_NAME} ENABLE ${TESSERACT_ENABLE_CLANG_TIDY})
 target_cxx_version(${PROJECT_NAME} PUBLIC VERSION ${TESSERACT_CXX_VERSION})
 target_code_coverage(
   ${PROJECT_NAME}
