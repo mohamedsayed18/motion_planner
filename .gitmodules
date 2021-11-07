@@ -19,3 +19,6 @@
 [submodule "descartes_light"]
 	path = descartes_light
 	url = git@github.com:swri-robotics/descartes_light.git
+[submodule "tesseract_ros_workcell"]
+	path = tesseract_ros_workcell
+	url = git@github.com:tesseract-robotics/tesseract_ros_workcell.git
