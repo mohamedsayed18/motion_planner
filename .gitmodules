@@ -13,3 +13,6 @@
 [submodule "trajopt"]
 	path = trajopt
 	url = git@github.com:tesseract-robotics/trajopt.git
+[submodule "opw_kinematics"]
+	path = opw_kinematics
+	url = git@github.com:Jmeyer1292/opw_kinematics.git
