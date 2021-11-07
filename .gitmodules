@@ -7,3 +7,6 @@
 [submodule "tesseract_planning"]
 	path = tesseract_planning
 	url = git@github.com:tesseract-robotics/tesseract_planning.git
+[submodule "tesseract_ros"]
+	path = tesseract_ros
+	url = https://github.com/tesseract-robotics/tesseract_ros
