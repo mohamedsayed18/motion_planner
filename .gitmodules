@@ -1,0 +1,3 @@
+[submodule "ros_industrial_cmake_boilerplate"]
+	path = ros_industrial_cmake_boilerplate
+	url = git@github.com:ros-industrial/ros_industrial_cmake_boilerplate.git
