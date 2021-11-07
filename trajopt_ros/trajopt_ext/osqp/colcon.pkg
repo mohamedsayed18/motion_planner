@@ -1,3 +1,0 @@
-{
-    "hooks": ["share/osqp/hook/ament_prefix_path.dsv", "share/osqp/hook/ros_package_path.dsv"]
-}
