@@ -16,3 +16,6 @@
 [submodule "opw_kinematics"]
 	path = opw_kinematics
 	url = git@github.com:Jmeyer1292/opw_kinematics.git
+[submodule "descartes_light"]
+	path = descartes_light
+	url = git@github.com:swri-robotics/descartes_light.git
