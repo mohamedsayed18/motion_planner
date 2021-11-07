@@ -10,3 +10,6 @@
 [submodule "tesseract_ros"]
 	path = tesseract_ros
 	url = https://github.com/tesseract-robotics/tesseract_ros
+[submodule "trajopt"]
+	path = trajopt
+	url = git@github.com:tesseract-robotics/trajopt.git
