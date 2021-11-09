@@ -30,17 +30,17 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_ros_examples/puzzle_piece_example.h>
-#include <tesseract_environment/core/utils.h>
+#include <tesseract_environment/utils.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/command_language.h>
 #include <tesseract_command_language/types.h>
 #include <tesseract_command_language/utils/utils.h>
-#include <tesseract_process_managers/taskflow_generators/trajopt_taskflow.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_solver_profile.h>
 #include <tesseract_motion_planners/core/utils.h>
+#include <tesseract_process_managers/core/default_process_planners.h>
 #include <tesseract_planning_server/tesseract_planning_server.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
 
@@ -135,7 +135,6 @@ bool PuzzlePieceExample::run()
   using tesseract_planning::ProcessPlanningRequest;
   using tesseract_planning::ProcessPlanningServer;
   using tesseract_planning::StateWaypoint;
-  using tesseract_planning::ToolCenterPoint;
   using tesseract_planning::Waypoint;
   using tesseract_planning_server::ROSProcessEnvironmentCache;
 
@@ -146,8 +145,8 @@ bool PuzzlePieceExample::run()
   nh_.getParam(ROBOT_DESCRIPTION_PARAM, urdf_xml_string);
   nh_.getParam(ROBOT_SEMANTIC_PARAM, srdf_xml_string);
 
-  ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-  if (!env_->init<OFKTStateSolver>(urdf_xml_string, srdf_xml_string, locator))
+  auto locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+  if (!env_->init(urdf_xml_string, srdf_xml_string, locator))
     return false;
 
   // Create monitor
@@ -188,7 +187,7 @@ bool PuzzlePieceExample::run()
   ManipulatorInfo mi;
   mi.manipulator = "manipulator";
   mi.working_frame = "part";
-  mi.tcp = ToolCenterPoint("grinder_frame", true);  // true - indicates this is an external TCP
+  mi.tcp_frame = "grinder_frame";
 
   // Create Program
   CompositeInstruction program("DEFAULT", CompositeInstructionOrder::ORDERED, mi);
@@ -214,11 +213,7 @@ bool PuzzlePieceExample::run()
   // Create a trajopt taskflow without post collision checking
   /** @todo This matches the original example, but should update to include post collision check */
   const std::string new_planner_name = "TRAJOPT_NO_POST_CHECK";
-  tesseract_planning::TrajOptTaskflowParams params;
-  params.enable_post_contact_discrete_check = false;
-  params.enable_post_contact_continuous_check = false;
-  planning_server.registerProcessPlanner(new_planner_name,
-                                         std::make_unique<tesseract_planning::TrajOptTaskflow>(params));
+  planning_server.registerProcessPlanner(new_planner_name, tesseract_planning::createTrajOptGenerator(true, false));
 
   // Create TrajOpt Profile
   auto trajopt_plan_profile = std::make_shared<tesseract_planning::TrajOptDefaultPlanProfile>();
@@ -254,7 +249,7 @@ bool PuzzlePieceExample::run()
   tesseract_planning::CompositeInstruction naive_seed;
   {
     auto lock = monitor_->lockEnvironmentRead();
-    naive_seed = tesseract_planning::generateNaiveSeed(program, *(monitor_->getEnvironment()));
+    naive_seed = tesseract_planning::generateNaiveSeed(program, monitor_->getEnvironment());
   }
   request.seed = Instruction(naive_seed);
 
@@ -275,7 +270,8 @@ bool PuzzlePieceExample::run()
     plotter->waitForInput();
     const auto& ci = response.results->as<tesseract_planning::CompositeInstruction>();
     tesseract_common::JointTrajectory trajectory = tesseract_planning::toJointTrajectory(ci);
-    plotter->plotTrajectory(trajectory, env_->getStateSolver());
+    auto state_solver = env_->getStateSolver();
+    plotter->plotTrajectory(trajectory, *state_solver);
   }
 
   ROS_INFO("Final trajectory is collision free");

@@ -29,7 +29,7 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_ros_examples/scene_graph_example.h>
-#include <tesseract_environment/core/utils.h>
+#include <tesseract_environment/utils.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/command_language.h>
@@ -57,8 +57,8 @@ bool SceneGraphExample::run()
   nh_.getParam(ROBOT_DESCRIPTION_PARAM, urdf_xml_string);
   nh_.getParam(ROBOT_SEMANTIC_PARAM, srdf_xml_string);
 
-  ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-  if (!env_->init<OFKTStateSolver>(urdf_xml_string, srdf_xml_string, locator))
+  auto locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+  if (!env_->init(urdf_xml_string, srdf_xml_string, locator))
     return false;
 
   // Create monitor
@@ -69,7 +69,7 @@ bool SceneGraphExample::run()
   ros::spinOnce();
   {
     auto lock = monitor_->lockEnvironmentRead();
-    monitor_->getEnvironment()->getSceneGraph()->saveDOT("scene_graph_example.dot");
+    monitor_->getEnvironment().getSceneGraph()->saveDOT("scene_graph_example.dot");
   }
 
   // Create plotting tool
@@ -90,7 +90,7 @@ bool SceneGraphExample::run()
   // Save the scene graph to a file and publish the change
   {
     auto lock = monitor_->lockEnvironmentRead();
-    monitor_->getEnvironment()->getSceneGraph()->saveDOT("scene_graph_example_moveJoint.dot");
+    monitor_->getEnvironment().getSceneGraph()->saveDOT("scene_graph_example_moveJoint.dot");
   }
 
   if (plotting_)
@@ -115,7 +115,7 @@ bool SceneGraphExample::run()
   // Save the scene graph to a file and publish the change
   {
     auto lock = monitor_->lockEnvironmentRead();
-    monitor_->getEnvironment()->getSceneGraph()->saveDOT("scene_graph_example_moveLink.dot");
+    monitor_->getEnvironment().getSceneGraph()->saveDOT("scene_graph_example_moveLink.dot");
   }
 
   if (plotting_)
