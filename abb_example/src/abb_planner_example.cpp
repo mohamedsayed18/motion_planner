@@ -29,15 +29,13 @@ TESSERACT_COMMON_IGNORE_WARNINGS_PUSH
 TESSERACT_COMMON_IGNORE_WARNINGS_POP
 
 #include <tesseract_ros_examples/abb_planner_example.h>
-#include <tesseract_environment/core/utils.h>
-#include <tesseract_environment/core/commands.h>
+#include <tesseract_environment/utils.h>
+#include <tesseract_environment/commands.h>
 #include <tesseract_rosutils/plotting.h>
 #include <tesseract_rosutils/utils.h>
 #include <tesseract_command_language/command_language.h>
 #include <tesseract_command_language/profile_dictionary.h>
 #include <tesseract_command_language/utils/utils.h>
-#include <tesseract_process_managers/taskflow_generators/freespace_taskflow.h>
-#include <tesseract_process_managers/taskflow_generators/trajopt_taskflow.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_composite_profile.h>
 #include <tesseract_motion_planners/trajopt/profile/trajopt_default_plan_profile.h>
 #include <tesseract_planning_server/tesseract_planning_server.h>
@@ -124,8 +122,8 @@ bool AbbPlannerExample::run()
   nh_.getParam(ROBOT_DESCRIPTION_PARAM, urdf_xml_string);
   nh_.getParam(ROBOT_SEMANTIC_PARAM, srdf_xml_string);
 
-  ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-  if (!env_->init<OFKTStateSolver>(urdf_xml_string, srdf_xml_string, locator))
+  tesseract_common::ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+  if (!env_->init(urdf_xml_string, srdf_xml_string, locator))
     return false;
 
   // Create monitor
@@ -163,10 +161,8 @@ bool AbbPlannerExample::run()
   env_->setState(joint_names, joint_start_pos);
 
   // Create manipulator information for program
-  ManipulatorInfo mi;
-  mi.manipulator = "manipulator_aux";
-  mi.working_frame = "part";
-  mi.tcp = tesseract_planning::ToolCenterPoint("tool0", false);  // true - indicates this is an external TCP
+  ManipulatorInfo mi("robot_only", "positioner_tool0", "tool0");
+
   // Create Program
   CompositeInstruction program("FREESPACE", CompositeInstructionOrder::ORDERED, mi);
 
@@ -197,6 +193,8 @@ bool AbbPlannerExample::run()
 
   ROS_INFO("basic cartesian motion with abb");
 
+  plotter->waitForInput("Hit enter to send motion request!");
+
   // Create Process Planning Server
   ProcessPlanningServer planning_server(std::make_shared<ROSProcessEnvironmentCache>(monitor_), 5);
   planning_server.loadDefaultProcessPlanners();
@@ -218,10 +216,10 @@ bool AbbPlannerExample::run()
   {
     plotter->waitForInput();
     const auto& ci = response.results->as<tesseract_planning::CompositeInstruction>();
-    tesseract_common::Toolpath toolpath = tesseract_planning::toToolpath(ci, env_);
+    tesseract_common::Toolpath toolpath = tesseract_planning::toToolpath(ci, *env_);
     tesseract_common::JointTrajectory trajectory = tesseract_planning::toJointTrajectory(ci);
     plotter->plotMarker(ToolpathMarker(toolpath));
-    plotter->plotTrajectory(trajectory, env_->getStateSolver());
+    plotter->plotTrajectory(trajectory, *env_->getStateSolver());
   }
 
   ROS_INFO("Final trajectory is collision free");

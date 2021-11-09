@@ -22,3 +22,6 @@
 [submodule "tesseract_ros_workcell"]
 	path = tesseract_ros_workcell
 	url = git@github.com:tesseract-robotics/tesseract_ros_workcell.git
+[submodule "ifopt"]
+	path = ifopt
+	url = git@github.com:ethz-adrl/ifopt.git
