@@ -61,168 +61,166 @@ const std::string EXAMPLE_MONITOR_NAMESPACE = "tesseract_ros_examples";
 
 namespace tesseract_ros_examples
 {
-AbbPlannerExample::AbbPlannerExample(const ros::NodeHandle& nh,
-                                               bool plotting,
-                                               bool rviz,
-                                               double range,
-                                               double planning_time)
-  : Example(plotting, rviz), nh_(nh), range_(range), planning_time_(planning_time)
-{
-}
-
-tesseract_common::VectorIsometry3d AbbPlannerExample::getPoses()
-{
-  tesseract_common::VectorIsometry3d path;  // results
-  std::ifstream indata;
-  
-  std::string filename = ros::package::getPath("abb_example") + "/config/abb_waypoints.csv";
-  indata.open(filename);
-  std::string line;
-  while (std::getline(indata, line))
+  AbbPlannerExample::AbbPlannerExample(const ros::NodeHandle &nh,
+                                       bool plotting,
+                                       bool rviz,
+                                       double range,
+                                       double planning_time)
+      : Example(plotting, rviz), nh_(nh), range_(range), planning_time_(planning_time)
   {
-    std::stringstream linestream(line);
-    std::string cell;
-    Eigen::Matrix<double, 7, 1> xyzijk;
-    int i = 0;  
-    while (getline(linestream, cell, ','))
+  }
+
+  tesseract_common::VectorIsometry3d AbbPlannerExample::getPoses()
+  {
+    tesseract_common::VectorIsometry3d path; // results
+    std::ifstream indata;
+
+    std::string filename = ros::package::getPath("abb_example") + "/config/abb_waypoints.csv";
+    indata.open(filename);
+    std::string line;
+    while (std::getline(indata, line))
     {
-      xyzijk(i) = std::stod(cell);
-      i++;
+      std::stringstream linestream(line);
+      std::string cell;
+      Eigen::Matrix<double, 7, 1> xyzijk;
+      int i = 0;
+      while (getline(linestream, cell, ','))
+      {
+        xyzijk(i) = std::stod(cell);
+        i++;
+      }
+      Eigen::Isometry3d current_pose;
+      current_pose.translation() = Eigen::Vector3d(xyzijk(0), xyzijk(1), xyzijk(2));
+      current_pose.linear() = Eigen::Quaterniond(xyzijk(3), xyzijk(4), xyzijk(5), xyzijk(6)).toRotationMatrix();
+
+      path.push_back(current_pose);
     }
-    Eigen::Isometry3d current_pose;
-    current_pose.translation() = Eigen::Vector3d(xyzijk(0), xyzijk(1), xyzijk(2));
-    current_pose.linear() = Eigen::Quaterniond(xyzijk(3), xyzijk(4), xyzijk(5), xyzijk(6)).toRotationMatrix();
 
-    path.push_back(current_pose);
+    indata.close();
+    return path;
   }
-  
 
-  indata.close();
-  return path;
-}
-
-bool AbbPlannerExample::run()
-{
-  using tesseract_planning::CartesianWaypoint;
-  using tesseract_planning::CompositeInstruction;
-  using tesseract_planning::CompositeInstructionOrder;
-  using tesseract_planning::Instruction;
-  using tesseract_planning::ManipulatorInfo;
-  using tesseract_planning::PlanInstruction;
-  using tesseract_planning::PlanInstructionType;
-  using tesseract_planning::ProcessPlanningFuture;
-  using tesseract_planning::ProcessPlanningRequest;
-  using tesseract_planning::ProcessPlanningServer;
-  using tesseract_planning::StateWaypoint;
-  using tesseract_planning::Waypoint;
-  using tesseract_planning_server::ROSProcessEnvironmentCache;
-
-  // Initial setup
-  std::string urdf_xml_string, srdf_xml_string;
-  nh_.getParam(ROBOT_DESCRIPTION_PARAM, urdf_xml_string);
-  nh_.getParam(ROBOT_SEMANTIC_PARAM, srdf_xml_string);
-
-  tesseract_common::ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
-  if (!env_->init(urdf_xml_string, srdf_xml_string, locator))
-    return false;
-
-  // Create monitor
-  monitor_ = std::make_shared<tesseract_monitoring::EnvironmentMonitor>(env_, EXAMPLE_MONITOR_NAMESPACE);
-  if (rviz_)
-    monitor_->startPublishingEnvironment();
-
-  // Create plotting tool
-  ROSPlottingPtr plotter = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getSceneGraph()->getRoot());
-  if (rviz_)
-    plotter->waitForConnection();
-
-  // Set the robot initial state
-  std::vector<std::string> joint_names;
-  joint_names.push_back("joint_1");
-  joint_names.push_back("joint_2");
-  joint_names.push_back("joint_3");
-  joint_names.push_back("joint_4");
-  joint_names.push_back("joint_5");
-  joint_names.push_back("joint_6");
-//  joint_names.push_back("positioner_base_joint");
-//  joint_names.push_back("positioner_joint_1");
-
-
-  Eigen::VectorXd joint_start_pos(6);
-  joint_start_pos(0) = -0.4;
-  joint_start_pos(1) = 0.2762;
-  joint_start_pos(2) = 0.0;
-  joint_start_pos(3) = -1.3348;
-  joint_start_pos(4) = 0.0;
-  joint_start_pos(5) = 1.4959;
-//  joint_start_pos(6) = 0;
-//  joint_start_pos(7) = 0;
-
-  env_->setState(joint_names, joint_start_pos);
-
-  // Create manipulator information for program
-  ManipulatorInfo mi("robot_only", "positioner_tool0", "tool0");
-
-  // Create Program
-  CompositeInstruction program("FREESPACE", CompositeInstructionOrder::ORDERED, mi);
-
-  // Waypoints for the program
-  //TODO: The start point should match the joint state, we can use getState to know the position of the robot
-  Waypoint wp_start = StateWaypoint(joint_names, joint_start_pos);
-  Waypoint wp0 = CartesianWaypoint(getPoses()[0]);
-  Waypoint wp1 = CartesianWaypoint(getPoses()[1]);
-  Waypoint wp2 = CartesianWaypoint(getPoses()[2]);
-  Waypoint wp3 = CartesianWaypoint(getPoses()[3]);
-
-  // Plan motion from start to end
-  PlanInstruction start_instruction(wp_start, PlanInstructionType::START);
-  program.setStartInstruction(start_instruction);
-
-  PlanInstruction plan_f0(wp0, PlanInstructionType::FREESPACE, "FREESPACE");
-  PlanInstruction plan_f1(wp1, PlanInstructionType::LINEAR, "RASTER");
-  PlanInstruction plan_f2(wp2, PlanInstructionType::LINEAR, "RASTER");
-  PlanInstruction plan_f3(wp3, PlanInstructionType::LINEAR, "RASTER");
-  PlanInstruction plan_f4(wp0, PlanInstructionType::LINEAR, "FREESPACE");
-
-  // Add Instructions to program
-  program.push_back(plan_f0);
-  program.push_back(plan_f1);
-  program.push_back(plan_f2);
-  program.push_back(plan_f3);
-  program.push_back(plan_f4);
-
-  ROS_INFO("basic cartesian motion with abb");
-
-  plotter->waitForInput("Hit enter to send motion request!");
-
-  // Create Process Planning Server
-  ProcessPlanningServer planning_server(std::make_shared<ROSProcessEnvironmentCache>(monitor_), 5);
-  planning_server.loadDefaultProcessPlanners();
-
-  // Create Process Planning Request
-  ProcessPlanningRequest request;
-  request.name = tesseract_planning::process_planner_names::TRAJOPT_PLANNER_NAME;
-  request.instructions = Instruction(program);
-
-  // Print Diagnostics
-  request.instructions.print("Program: ");
-
-  // Solve process plan
-  ProcessPlanningFuture response = planning_server.run(request);
-  planning_server.waitForAll();
-
-  // Plot Process Trajectory
-  if (rviz_ && plotter != nullptr && plotter->isConnected())
+  bool AbbPlannerExample::run()
   {
-    plotter->waitForInput();
-    const auto& ci = response.results->as<tesseract_planning::CompositeInstruction>();
-    tesseract_common::Toolpath toolpath = tesseract_planning::toToolpath(ci, *env_);
-    tesseract_common::JointTrajectory trajectory = tesseract_planning::toJointTrajectory(ci);
-    plotter->plotMarker(ToolpathMarker(toolpath));
-    plotter->plotTrajectory(trajectory, *env_->getStateSolver());
-  }
+    using tesseract_planning::CartesianWaypoint;
+    using tesseract_planning::CompositeInstruction;
+    using tesseract_planning::CompositeInstructionOrder;
+    using tesseract_planning::Instruction;
+    using tesseract_planning::ManipulatorInfo;
+    using tesseract_planning::PlanInstruction;
+    using tesseract_planning::PlanInstructionType;
+    using tesseract_planning::ProcessPlanningFuture;
+    using tesseract_planning::ProcessPlanningRequest;
+    using tesseract_planning::ProcessPlanningServer;
+    using tesseract_planning::StateWaypoint;
+    using tesseract_planning::Waypoint;
+    using tesseract_planning_server::ROSProcessEnvironmentCache;
 
-  ROS_INFO("Final trajectory is collision free");
-  return true; 
-}
-}  // namespace tesseract_ros_examples
+    // Initial setup
+    std::string urdf_xml_string, srdf_xml_string;
+    nh_.getParam(ROBOT_DESCRIPTION_PARAM, urdf_xml_string);
+    nh_.getParam(ROBOT_SEMANTIC_PARAM, srdf_xml_string);
+
+    tesseract_common::ResourceLocator::Ptr locator = std::make_shared<tesseract_rosutils::ROSResourceLocator>();
+    if (!env_->init(urdf_xml_string, srdf_xml_string, locator))
+      return false;
+
+    // Create monitor
+    monitor_ = std::make_shared<tesseract_monitoring::EnvironmentMonitor>(env_, EXAMPLE_MONITOR_NAMESPACE);
+    if (rviz_)
+      monitor_->startPublishingEnvironment();
+
+    // Create plotting tool
+    ROSPlottingPtr plotter = std::make_shared<tesseract_rosutils::ROSPlotting>(env_->getSceneGraph()->getRoot());
+    if (rviz_)
+      plotter->waitForConnection();
+
+    // Set the robot initial state
+    std::vector<std::string> joint_names;
+    joint_names.push_back("joint_1");
+    joint_names.push_back("joint_2");
+    joint_names.push_back("joint_3");
+    joint_names.push_back("joint_4");
+    joint_names.push_back("joint_5");
+    joint_names.push_back("joint_6");
+    // joint_names.push_back("positioner_base_joint");
+    // joint_names.push_back("positioner_joint_1");
+
+    Eigen::VectorXd joint_start_pos(6);
+    joint_start_pos(0) = -0.4;
+    joint_start_pos(1) = 0.2762;
+    joint_start_pos(2) = 0.0;
+    joint_start_pos(3) = -1.3348;
+    joint_start_pos(4) = 0.0;
+    joint_start_pos(5) = 1.4959;
+    // joint_start_pos(6) = 0;
+    // joint_start_pos(7) = 0;
+
+    env_->setState(joint_names, joint_start_pos);
+
+    // Create manipulator information for program
+    ManipulatorInfo mi("robot_only", "base_link", "tool0");
+
+    // Create Program
+    CompositeInstruction program("FREESPACE", CompositeInstructionOrder::ORDERED, mi);
+
+    // Waypoints for the program
+    //TODO: The start point should match the joint state, we can use getState to know the position of the robot
+    Waypoint wp_start = StateWaypoint(joint_names, joint_start_pos);
+    Waypoint wp0 = CartesianWaypoint(getPoses()[0]);
+    Waypoint wp1 = CartesianWaypoint(getPoses()[1]);
+    Waypoint wp2 = CartesianWaypoint(getPoses()[2]);
+    Waypoint wp3 = CartesianWaypoint(getPoses()[3]);
+
+    // Plan motion from start to end
+    PlanInstruction start_instruction(wp_start, PlanInstructionType::START);
+    program.setStartInstruction(start_instruction);
+
+    PlanInstruction plan_f0(wp0, PlanInstructionType::FREESPACE, "FREESPACE");
+    PlanInstruction plan_f1(wp1, PlanInstructionType::LINEAR, "RASTER");
+    PlanInstruction plan_f2(wp2, PlanInstructionType::LINEAR, "RASTER");
+    PlanInstruction plan_f3(wp3, PlanInstructionType::LINEAR, "RASTER");
+    PlanInstruction plan_f4(wp0, PlanInstructionType::LINEAR, "FREESPACE");
+
+    // Add Instructions to program
+    program.push_back(plan_f0);
+    //program.push_back(plan_f1);
+    // program.push_back(plan_f2);
+    // program.push_back(plan_f3);
+    // program.push_back(plan_f4);
+
+    ROS_INFO("basic cartesian motion with abb");
+
+    plotter->waitForInput("Hit enter to send motion request!");
+
+    // Create Process Planning Server
+    ProcessPlanningServer planning_server(std::make_shared<ROSProcessEnvironmentCache>(monitor_), 5);
+    planning_server.loadDefaultProcessPlanners();
+
+    // Create Process Planning Request
+    ProcessPlanningRequest request;
+    request.name = tesseract_planning::process_planner_names::FREESPACE_PLANNER_NAME;
+    request.instructions = Instruction(program);
+
+    // Print Diagnostics
+    request.instructions.print("Program: ");
+
+    // Solve process plan
+    ProcessPlanningFuture response = planning_server.run(request);
+    planning_server.waitForAll();
+
+    // Plot Process Trajectory
+    if (rviz_ && plotter != nullptr && plotter->isConnected())
+    {
+      plotter->waitForInput();
+      const auto &ci = response.results->as<tesseract_planning::CompositeInstruction>();
+      tesseract_common::Toolpath toolpath = tesseract_planning::toToolpath(ci, *env_);
+      tesseract_common::JointTrajectory trajectory = tesseract_planning::toJointTrajectory(ci);
+      plotter->plotMarker(ToolpathMarker(toolpath));
+      plotter->plotTrajectory(trajectory, *env_->getStateSolver());
+    }
+
+    ROS_INFO("Final trajectory is collision free");
+    return true;
+  }
+} // namespace tesseract_ros_examples
