@@ -49,4 +49,7 @@
     <disable_collisions link1="link_4" link2="link_6" reason="Never" />
     <disable_collisions link1="link_5" link2="link_6" reason="Adjacent" />
 
+    <disable_collisions link1="positioner_base_link" link2="positioner_link_1" reason="Adjacent" />
+    <disable_collisions link1="positioner_link_1" link2="positioner_link_2" reason="Adjacent" />
+
 </robot>
