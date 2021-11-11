@@ -9,6 +9,13 @@
   <xacro:abb_irb2600_12_165 prefix=""/>
     
   <link name="world"/>
+  <link name="pos_too0_viz"/>
+
+  <joint name="visulizer" type="fixed">
+    <parent link="positioner_tool0"/>
+    <child link="pos_too0_viz"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
 
   <joint name="world_to_positioner" type="fixed">
     <parent link="world"/>

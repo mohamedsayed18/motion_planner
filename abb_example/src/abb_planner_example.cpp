@@ -43,6 +43,9 @@ TESSERACT_COMMON_IGNORE_WARNINGS_POP
 #include <tesseract_motion_planners/core/utils.h>
 #include <tesseract_visualization/markers/toolpath_marker.h>
 
+#include <tesseract_motion_planners/trajopt_ifopt/profile/trajopt_ifopt_default_plan_profile.h>
+#include <tesseract_motion_planners/trajopt_ifopt/profile/trajopt_ifopt_default_composite_profile.h>
+
 using namespace tesseract_environment;
 using namespace tesseract_scene_graph;
 using namespace tesseract_collision;
@@ -177,21 +180,21 @@ namespace tesseract_ros_examples
     program.setStartInstruction(start_instruction);
 
     PlanInstruction plan_f0(wp0, PlanInstructionType::FREESPACE, "FREESPACE");
-    PlanInstruction plan_f1(wp1, PlanInstructionType::FREESPACE, "FREESPACE");
-    PlanInstruction plan_f2(wp2, PlanInstructionType::FREESPACE, "FREESPACE");
-    PlanInstruction plan_f3(wp3, PlanInstructionType::FREESPACE, "FREESPACE");
-    PlanInstruction plan_f4(wp0, PlanInstructionType::FREESPACE, "FREESPACE");
+    PlanInstruction plan_f1(wp1, PlanInstructionType::LINEAR, "RASTER");
+    PlanInstruction plan_f2(wp2, PlanInstructionType::LINEAR, "RASTER");
+    PlanInstruction plan_f3(wp3, PlanInstructionType::LINEAR, "RASTER");
+    PlanInstruction plan_f4(wp0, PlanInstructionType::LINEAR, "RASTER");
 
     // Add Instructions to program
     program.push_back(plan_f0);
     program.push_back(plan_f1);
     program.push_back(plan_f2);
     program.push_back(plan_f3);
-    // program.push_back(plan_f4);
+    program.push_back(plan_f4);
 
     ROS_INFO("basic cartesian motion with abb");
 
-    plotter->waitForInput("Hit enter to send motion request!");
+    // plotter->waitForInput("Hit enter to send motion request!");
 
     // Create Process Planning Server
     ProcessPlanningServer planning_server(std::make_shared<ROSProcessEnvironmentCache>(monitor_), 5);
@@ -199,6 +202,7 @@ namespace tesseract_ros_examples
 
     // Create Process Planning Request
     ProcessPlanningRequest request;
+
     request.name = tesseract_planning::process_planner_names::TRAJOPT_PLANNER_NAME;
     request.instructions = Instruction(program);
 
